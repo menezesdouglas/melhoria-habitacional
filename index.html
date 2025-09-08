@@ -1,10 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Levantamento Habitacional </title>
+    <title>Levantamento Habitacional v18.2</title>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -34,18 +34,44 @@
         .servico-item { padding: 15px; border: 1px solid #e9ecef; border-radius: 4px; margin-top: 10px; }
         .service-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .service-header strong { font-size: 1.1em; }
+
+        /* ESTILO DO FOOTER ADICIONADO AQUI */
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            border-top: 1px solid #dee2e6;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        footer a {
+            color: #0056b3;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Ferramenta de Levantamento v18.0</h1>
+    <h1>Ferramenta de Levantamento v18.2</h1>
 
     <div class="bloco">
         <h2>Dados do Beneficiário</h2>
          <div class="collapsible-content">
             <div class="campo"><label for="nomeBeneficiario">Nome Completo:</label><input type="text" id="nomeBeneficiario"></div>
             <div class="campo"><label for="enderecoBeneficiario">Endereço:</label><input type="text" id="enderecoBeneficiario"></div>
+        </div>
+    </div>
+
+    <div class="bloco">
+        <h2>Dados do Responsável Técnico</h2>
+        <div class="campo">
+            <label for="nomeResponsavel">Nome do Responsável Técnico:</label>
+            <input type="text" id="nomeResponsavel" placeholder="Digite o nome do técnico">
         </div>
     </div>
     
@@ -74,11 +100,11 @@
 
     <h2>Cômodos e Intervenções</h2>
     <div id="listaComodos"></div>
-    <button id="addComodo" class="btn-add">Adicionar Cômodo</button>
+    <button id="addComodo" class="btn-add" data-action="add-comodo">Adicionar Cômodo</button>
 
     <hr style="margin: 30px 0;">
-    <button id="gerarResumo">Gerar Relatório de Texto</button>
-    <button id="gerarPDF" class="btn-pdf" style="display:none;">Gerar PDF</button>
+    <button id="gerarResumo" data-action="gerar-relatorio">Gerar Relatório de Texto</button>
+    <button id="gerarPDF" class="btn-pdf" style="display:none;" data-action="gerar-pdf">Gerar PDF</button>
 
     <div id="output" style="display:none; margin-top: 20px;">
         <h3>Relatório Final</h3>
@@ -86,9 +112,17 @@
             <pre id="resumo"></pre>
         </div>
     </div>
+
+    <footer>
+        Desenvolvido por 
+        <a href="https://github.com/menezesdouglas" target="_blank" rel="noopener noreferrer">Douglas Menezes</a> 
+        & 
+        <a href="https://github.com/vitoriamignon" target="_blank" rel="noopener noreferrer">Vitória Mignon</a>
+    </footer>
 </div>
 
 <script>
+// ... (Todo o JavaScript permanece exatamente o mesmo)
 window.jsPDF = window.jspdf.jsPDF;
 let nextId = 0;
 
@@ -197,6 +231,7 @@ function gerarRelatorio() {
     let texto = `MEMORIAL DESCRITIVO\n\n`;
     texto += `BENEFICIÁRIO(A): ${document.getElementById('nomeBeneficiario').value}\n`;
     texto += `ENDEREÇO: ${document.getElementById('enderecoBeneficiario').value}\n`;
+    texto += `RESPONSÁVEL TÉCNICO: ${document.getElementById('nomeResponsavel').value}\n`;
     const totaisGerais = {};
 
     const processarServico = (servicoDiv) => {
@@ -351,53 +386,53 @@ async function gerarPDF() {
     });
 }
 
-// ============ Event Listeners Principais ============
-document.getElementById('addComodo').addEventListener('click', () => {
-    const comodoId = `comodo_${nextId++}`;
-    const comodoDiv = document.createElement('div');
-    comodoDiv.className = 'bloco';
-    comodoDiv.id = comodoId;
-    comodoDiv.setAttribute('data-bloco-type', 'comodo');
-    comodoDiv.innerHTML = `
-        <h3>Novo Cômodo <button class="btn-remove" data-action="remove-element" data-target-id="${comodoId}">Remover</button></h3>
-        <div class="collapsible-content">
-            <div class="campo"><label>Nome do Cômodo:</label><input type="text" class="comodo-nome" placeholder="Ex: Cozinha"></div>
-            <div class="grid-3-col">
-                 <div class="campo"><label>PD Máximo (m):</label><input type="number" class="comodo-pd-max" placeholder="Ex: 2.85"></div>
-                 <div class="campo"><label>PD Mínimo (m):</label><input type="number" class="comodo-pd-min" placeholder="Ex: 2.48"></div>
-            </div>
-            
-            <h4>Paredes do Cômodo</h4>
-            <div class="paredes-container"></div>
-            <button class="btn-add btn-add-small" data-action="add-parede">Adicionar Parede</button>
-            
-            <h4>Piso do Cômodo</h4>
-            <div class="campo"><label>Área do Piso (m²):</label><input type="number" class="comodo-area-piso" placeholder="Área exata do piso"></div>
-            <div class="piso-container servicos-container"></div>
-            <button class="btn-add btn-add-small" data-action="add-servico-piso">Adicionar Serviço ao Piso</button>
+// ============ Event Listener Principais ============
+function handleAppActions(e) {
+    const target = e.target.closest('[data-action]');
+    if (!target) return;
 
-            <h4>Teto do Cômodo</h4>
-            <div class="campo"><label>Área do Teto (m²):</label><input type="number" class="comodo-area-teto" placeholder="Área exata do teto"></div>
-            <div class="teto-container servicos-container"></div>
-            <button class="btn-add btn-add-small" data-action="add-servico-teto">Adicionar Serviço ao Teto</button>
-
-            <h4>Equipamentos e Instalações Gerais</h4>
-            <div class="equipamentos-container servicos-container"></div>
-            <button class="btn-add btn-add-small" data-action="add-equipamento-geral">Adicionar Equipamento</button>
-        </div>
-        <button class="btn-toggle" data-action="toggle-collapse">Concluir Seção</button>
-    `;
-    document.getElementById('listaComodos').appendChild(comodoDiv);
-});
-
-document.addEventListener('click', (e) => {
-    const target = e.target;
+    e.preventDefault(); 
     const action = target.dataset.action;
-    if (!action) return;
-
     let container, tipos = [];
 
     switch (action) {
+        case 'add-comodo':
+            const comodoId = `comodo_${nextId++}`;
+            const comodoDiv = document.createElement('div');
+            comodoDiv.className = 'bloco';
+            comodoDiv.id = comodoId;
+            comodoDiv.setAttribute('data-bloco-type', 'comodo');
+            comodoDiv.innerHTML = `
+                <h3>Novo Cômodo <button class="btn-remove" data-action="remove-element" data-target-id="${comodoId}">Remover</button></h3>
+                <div class="collapsible-content">
+                    <div class="campo"><label>Nome do Cômodo:</label><input type="text" class="comodo-nome" placeholder="Ex: Cozinha"></div>
+                    <div class="grid-3-col">
+                         <div class="campo"><label>PD Máximo (m):</label><input type="number" class="comodo-pd-max" placeholder="Ex: 2.85"></div>
+                         <div class="campo"><label>PD Mínimo (m):</label><input type="number" class="comodo-pd-min" placeholder="Ex: 2.48"></div>
+                    </div>
+                    
+                    <h4>Paredes do Cômodo</h4>
+                    <div class="paredes-container"></div>
+                    <button class="btn-add btn-add-small" data-action="add-parede">Adicionar Parede</button>
+                    
+                    <h4>Piso do Cômodo</h4>
+                    <div class="campo"><label>Área do Piso (m²):</label><input type="number" class="comodo-area-piso" placeholder="Área exata do piso"></div>
+                    <div class="piso-container servicos-container"></div>
+                    <button class="btn-add btn-add-small" data-action="add-servico-piso">Adicionar Serviço ao Piso</button>
+
+                    <h4>Teto do Cômodo</h4>
+                    <div class="campo"><label>Área do Teto (m²):</label><input type="number" class="comodo-area-teto" placeholder="Área exata do teto"></div>
+                    <div class="teto-container servicos-container"></div>
+                    <button class="btn-add btn-add-small" data-action="add-servico-teto">Adicionar Serviço ao Teto</button>
+
+                    <h4>Equipamentos e Instalações Gerais</h4>
+                    <div class="equipamentos-container servicos-container"></div>
+                    <button class="btn-add btn-add-small" data-action="add-equipamento-geral">Adicionar Equipamento</button>
+                </div>
+                <button class="btn-toggle" data-action="toggle-collapse">Concluir Seção</button>
+            `;
+            document.getElementById('listaComodos').appendChild(comodoDiv);
+            return;
         case 'add-servico-cobertura':
             container = target.closest('.bloco').querySelector('.servicos-container');
             tipos = ['cobertura', 'cobertura_linear'];
@@ -447,6 +482,18 @@ document.addEventListener('click', (e) => {
             serviceContent.classList.toggle('hidden');
             target.textContent = serviceContent.classList.contains('hidden') ? 'Editar Serviço' : 'Fechar Serviço';
             return;
+        case 'gerar-relatorio':
+            document.querySelectorAll('.collapsible-content, .service-collapsible-content').forEach(el => el.classList.remove('hidden'));
+            document.querySelectorAll('[data-action="toggle-collapse"]').forEach(btn => btn.textContent = 'Concluir Seção');
+            document.querySelectorAll('[data-action="toggle-service"]').forEach(btn => btn.textContent = 'Fechar Serviço');
+            const textoFinal = gerarRelatorio();
+            document.getElementById('resumo').textContent = textoFinal;
+            document.getElementById('output').style.display = 'block';
+            document.getElementById('gerarPDF').style.display = 'inline-block';
+            return;
+        case 'gerar-pdf':
+            gerarPDF();
+            return;
         default:
             return;
     }
@@ -460,18 +507,26 @@ document.addEventListener('click', (e) => {
         const select = document.createElement('select');
         popularSelectServicos(select, tipos);
 
-        servicoDiv.innerHTML = `<button class="btn-remove" data-action="remove-element" data-target-id="${servicoId}">X</button><div class="service-header"></div><div class="service-collapsible-content"></div>`;
+        servicoDiv.innerHTML = `<div class="service-header"></div><div class="service-collapsible-content"></div>`;
         const header = servicoDiv.querySelector('.service-header');
         const content = servicoDiv.querySelector('.service-collapsible-content');
+        
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'btn-remove';
+        removeBtn.dataset.action = 'remove-element';
+        removeBtn.dataset.targetId = servicoId;
+        removeBtn.textContent = 'X';
 
         const label = document.createElement('label');
         label.textContent = 'Serviço:';
+
+        header.appendChild(removeBtn);
         content.appendChild(label);
         content.appendChild(select);
         content.innerHTML += `<div class="campos-especificos" style="margin-top:10px;"></div>`;
         container.appendChild(servicoDiv);
     }
-});
+}
 
 document.addEventListener('input', (e) => {
     const target = e.target;
@@ -510,17 +565,10 @@ document.addEventListener('change', (e) => {
     }
 });
 
-document.getElementById('gerarResumo').addEventListener('click', () => {
-    document.querySelectorAll('.collapsible-content, .service-collapsible-content').forEach(el => el.classList.remove('hidden'));
-    document.querySelectorAll('[data-action="toggle-collapse"]').forEach(btn => btn.textContent = 'Concluir Seção');
-    document.querySelectorAll('[data-action="toggle-service"]').forEach(btn => btn.textContent = 'Fechar Serviço');
-    const textoFinal = gerarRelatorio();
-    document.getElementById('resumo').textContent = textoFinal;
-    document.getElementById('output').style.display = 'block';
-    document.getElementById('gerarPDF').style.display = 'inline-block';
+// Listener unificado para click e touch
+['click', 'touchend'].forEach(evt => {
+    document.addEventListener(evt, handleAppActions);
 });
-
-document.getElementById('gerarPDF').addEventListener('click', gerarPDF);
 </script>
 </body>
 </html>
