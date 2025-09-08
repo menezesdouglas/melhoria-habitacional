@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Levantamento Habitacional v19.5</title>
+    <title>Levantamento Habitacional v19.6</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -76,7 +76,7 @@
 <body>
 
 <div class="container">
-    <h1>Ferramenta de Levantamento v19.5</h1>
+    <h1>Ferramenta de Levantamento v19.6</h1>
     <div class="bloco">
         <h2>Dados do Beneficiário</h2>
          <div class="collapsible-content">
@@ -156,9 +156,11 @@ const SERVICOS_DB = {
     "remocao_cobertura_fibrocimento_inclusive": { nome: "Remoção de cobertura de fibrocimento (inclusive madeiramento)", unidade: "m²", tipo: "cobertura" },
     "madeiramento_cobertura_onduladas": { nome: "Madeiramento para cobertura em telhas onduladas", unidade: "m²", tipo: "cobertura" },
     "cobertura_telhas_crfs_6mm": { nome: "Cobertura em telhas de cimento CRFS 6mm (sem amianto)", unidade: "m²", tipo: "cobertura" },
-    // -- Peças de Madeira, Beirais e Lineares --
+    // -- Peças de Madeira, Beirais, Calhas e Lineares --
     "beiral_fibrocimento_60cm": { nome: "Beiral de telhas onduladas de fibrocimento 6mm, projeção 60cm", unidade: "m", tipo: "cobertura_linear" },
     "beiral_fibrocimento_120cm": { nome: "Beiral de telhas onduladas de fibrocimento 6mm, projeção 120cm", unidade: "m", tipo: "cobertura_linear" },
+    "calha_beiral_pvc_dn125": { nome: "Calha de beiral semi-circular de PVC, DN 125", unidade: "m", tipo: "cobertura_linear" },
+    "condutor_circular_pvc_dn88": { nome: "Condutor circular para calha de beiral de PVC, DN 88", unidade: "m", tipo: "cobertura_linear" },
     "caibro_madeira_3x1_5": { nome: "Caibro de madeira serrada 3\"x1.1/2\"", unidade: "m", tipo: "cobertura_linear" },
     "ripa_madeira_1_5x4cm": { nome: "Ripa de madeira serrada 1,5x4cm", unidade: "m", tipo: "cobertura_linear" },
     "terca_madeira_3x3": { nome: "Terça de madeira serrada 3\"x3\"", unidade: "m", tipo: "cobertura_linear" },
