@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Levantamento Habitacional v19.2</title>
+    <title>Levantamento Habitacional v19.4</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -12,7 +12,7 @@
         .container { max-width: 900px; margin: 20px auto; background-color: #ffffff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         h1, h2, h3, h4, h5 { color: #0056b3; border-bottom: 2px solid #e9ecef; padding-bottom: 8px; }
         h4 { margin-top: 30px; }
-        h3, h5 { display: flex; justify-content: space-between; align-items: center; } /* Alinha o título e o botão */
+        h3, h5 { display: flex; justify-content: space-between; align-items: center; }
         .bloco { border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 25px; background-color: #fff; }
         .parede-bloco, .piso-bloco { border: 1px solid #ced4da; border-radius: 5px; padding: 15px; margin-top: 15px; background-color: #f8f9fa; }
         .campo { margin-bottom: 15px; }
@@ -31,7 +31,7 @@
         .btn-remove {
             background: transparent;
             border: none;
-            color: #6c757d; /* Cinza sutil */
+            color: #6c757d;
             padding: 5px;
             margin: 0;
             margin-left: 10px;
@@ -48,7 +48,7 @@
             height: 18px;
         }
         .btn-remove:hover {
-            color: #dc3545; /* Vermelho no hover */
+            color: #dc3545;
             background-color: #f1f1f1;
         }
         
@@ -63,7 +63,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
-            gap: 10px; /* Espaçamento entre nome e botões */
+            gap: 10px;
         }
         .service-header strong { font-size: 1.1em; flex-grow: 1; }
         .header-buttons { display: flex; align-items: center; flex-shrink: 0; }
@@ -76,8 +76,7 @@
 <body>
 
 <div class="container">
-    <h1>Ferramenta de Levantamento v19.2</h1>
-
+    <h1>Ferramenta de Levantamento v19.4</h1>
     <div class="bloco">
         <h2>Dados do Beneficiário</h2>
          <div class="collapsible-content">
@@ -85,7 +84,6 @@
             <div class="campo"><label for="enderecoBeneficiario">Endereço:</label><input type="text" id="enderecoBeneficiario"></div>
         </div>
     </div>
-
     <div class="bloco">
         <h2>Dados do Responsável Técnico</h2>
         <div class="campo">
@@ -93,7 +91,6 @@
             <input type="text" id="nomeResponsavel" placeholder="Digite o nome do técnico">
         </div>
     </div>
-    
     <div id="bloco-cobertura" class="bloco" data-bloco-type="cobertura">
         <h2>Cobertura</h2>
         <div class="collapsible-content">
@@ -116,22 +113,18 @@
         </div>
         <button class="btn-toggle" data-action="toggle-collapse">Concluir Seção</button>
     </div>
-
     <h2>Cômodos e Intervenções</h2>
     <div id="listaComodos"></div>
     <button id="addComodo" class="btn-add" data-action="add-comodo">Adicionar Cômodo</button>
-
     <hr style="margin: 30px 0;">
     <button id="gerarResumo" data-action="gerar-relatorio">Gerar Relatório de Texto</button>
     <button id="gerarPDF" class="btn-pdf" style="display:none;" data-action="gerar-pdf">Gerar PDF</button>
-
     <div id="output" style="display:none; margin-top: 20px;">
         <h3>Relatório Final</h3>
         <div id="resumo-container">
             <pre id="resumo"></pre>
         </div>
     </div>
-    
     <footer>
         Desenvolvido por 
         <a href="https://github.com/menezesdouglas" target="_blank" rel="noopener noreferrer">Douglas Menezes</a> 
@@ -147,14 +140,29 @@ window.jsPDF = window.jspdf.jsPDF;
 let nextId = 0;
 
 const SERVICOS_DB = {
-    // Cobertura
-    "remocao_cobertura_telhas": { nome: "Remoção de cobertura em telhas", unidade: "m²", tipo: "cobertura" },
+    // ===== COBERTURA =====
     "estrutura_madeira_cobertura": { nome: "Estrutura em madeira para cobertura", unidade: "m²", tipo: "cobertura" },
-    "cobertura_telha_ceramica": { nome: "Cobertura com telha cerâmica", unidade: "m²", tipo: "cobertura" },
-    "cobertura_telha_fibrocimento": { nome: "Cobertura com telha fibrocimento", unidade: "m²", tipo: "cobertura" },
-    "rufo_cumeeira": { nome: "Rufo/Cumeeira", unidade: "m", tipo: "cobertura_linear" },
-    
-    // Serviços de Parede
+    // -- Coberturas Cerâmicas --
+    "remocao_telha_francesa_ex_madeiramento": { nome: "Remoção de cobertura em telhas francesas (exclusivo madeiramento)", unidade: "m²", tipo: "cobertura" },
+    "remocao_telha_francesa_inclusive": { nome: "Remoção de cobertura em telhas francesas (inclusive)", unidade: "m²", tipo: "cobertura" },
+    "retirada_recolocacao_telhas_francesas": { nome: "Retirada e recolocação de telhas francesas (inclusive)", unidade: "m²", tipo: "cobertura" },
+    "cumeeira_recolocacao": { nome: "Cumeeira (exclusive fornecimento de material novo)", unidade: "m²", tipo: "cobertura" },
+    "retirada_recolocacao_madeiramento": { nome: "Retirada e recolocação de madeiramento (telhas francesas/coloniais)", unidade: "m²", tipo: "cobertura" },
+    "trama_madeira_completa": { nome: "Trama de madeira (ripas, caibros, terças) para telhados de até 2 águas", unidade: "m²", tipo: "cobertura" },
+    "cobertura_telha_ceramica_francesa": { nome: "Cobertura em telha ceramica francesa (exclusive cumeeira e madeiramento)", unidade: "m²", tipo: "cobertura" },
+    // -- Coberturas de Fibrocimento --
+    "remocao_cobertura_fibrocimento_ex_madeiramento": { nome: "Remoção de cobertura de fibrocimento (exclusive madeiramento)", unidade: "m²", tipo: "cobertura" },
+    "retirada_recolocacao_madeiramento_fibrocimento": { nome: "Retirada e recolocação de madeiramento (telhas fibrocimento)", unidade: "m²", tipo: "cobertura" },
+    "remocao_cobertura_fibrocimento_inclusive": { nome: "Remoção de cobertura de fibrocimento (inclusive madeiramento)", unidade: "m²", tipo: "cobertura" },
+    "madeiramento_cobertura_onduladas": { nome: "Madeiramento para cobertura em telhas onduladas", unidade: "m²", tipo: "cobertura" },
+    "cobertura_telhas_crfs_6mm": { nome: "Cobertura em telhas de cimento CRFS 6mm (sem amianto)", unidade: "m²", tipo: "cobertura" },
+    // -- Peças de Madeira e lineares --
+    "caibro_madeira_3x1_5": { nome: "Caibro de madeira serrada 3\"x1.1/2\"", unidade: "m", tipo: "cobertura_linear" },
+    "ripa_madeira_1_5x4cm": { nome: "Ripa de madeira serrada 1,5x4cm", unidade: "m", tipo: "cobertura_linear" },
+    "terca_madeira_3x3": { nome: "Terça de madeira serrada 3\"x3\"", unidade: "m", tipo: "cobertura_linear" },
+    "terca_madeira_aparelhada_3x4_5": { nome: "Terça de madeira aparelhada 3\"x4.1/2\"", unidade: "m", tipo: "cobertura_linear" },
+
+    // ===== SERVIÇOS DE PAREDE =====
     "remocao_revestimento_parede": { nome: "Remoção de revestimento de parede", unidade: "m²", tipo: "parede_area_custom" },
     "alvenaria_vedacao": { nome: "Alvenaria de vedação", unidade: "m²", tipo: "parede_area_custom" },
     "corte_impermeabilizacao": { nome: "Corte e impermeabilização de parede", unidade: "m²", tipo: "parede_area_custom" },
@@ -173,7 +181,7 @@ const SERVICOS_DB = {
     "vaso_sanitario_parede": { nome: "Vaso sanitário com caixa acoplada", unidade: "un", tipo: "unitario_parede" },
     "tanque_louca_parede": { nome: "Tanque de louça", unidade: "un", tipo: "unitario_parede" },
 
-    // Serviços de Piso
+    // ===== SERVIÇOS DE PISO =====
     "remocao_piso_ceramico": { nome: "Arrancamento de piso cerâmico", unidade: "m²", tipo: "piso_custom" },
     "demolicao_piso_cimentado": { nome: "Demolição de piso cimentado", unidade: "m²", tipo: "piso_custom" },
     "contrapiso_1_5cm": { nome: "Contrapiso de argamassa e=1,5cm", unidade: "m²", tipo: "piso_custom" },
@@ -181,11 +189,11 @@ const SERVICOS_DB = {
     "revestimento_ceramico_piso": { nome: "Piso em revestimento cerâmico", unidade: "m²", tipo: "piso_custom" },
     "lastro_concreto": { nome: "Lastro de concreto", unidade: "m³", tipo: "piso_vol_custom" },
     
-    // Serviços de Teto
+    // ===== SERVIÇOS DE TETO =====
     "forro_pvc": { nome: "Forro de PVC", unidade: "m²", tipo: "teto_custom" },
     "ponto_iluminacao": { nome: "Ponto de iluminação c/ lâmpada LED", unidade: "un", tipo: "unitario_teto" },
     
-    // Equipamentos Gerais (que não se encaixam em nenhuma superfície)
+    // ===== EQUIPAMENTOS GERAIS =====
     "caixa_agua_1000l": { nome: "Caixa d'água de polietileno 1000L", unidade: "un", tipo: "equipamento_geral" },
 };
 
@@ -435,7 +443,6 @@ async function gerarPDF() {
     });
 }
 
-// ============ Event Listener Principais ============
 function handleAppActions(e) {
     const target = e.target.closest('[data-action]');
     if (!target) return;
