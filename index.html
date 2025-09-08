@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Levantamento Habitacional v18.2</title>
+    <title>Levantamento Habitacional v18.4</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -34,30 +34,15 @@
         .servico-item { padding: 15px; border: 1px solid #e9ecef; border-radius: 4px; margin-top: 10px; }
         .service-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .service-header strong { font-size: 1.1em; }
-
-        /* ESTILO DO FOOTER ADICIONADO AQUI */
-        footer {
-            text-align: center;
-            padding: 20px;
-            margin-top: 40px;
-            border-top: 1px solid #dee2e6;
-            font-size: 14px;
-            color: #6c757d;
-        }
-        footer a {
-            color: #0056b3;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        footer a:hover {
-            text-decoration: underline;
-        }
+        footer { text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid #dee2e6; font-size: 14px; color: #6c757d; }
+        footer a { color: #0056b3; text-decoration: none; font-weight: 600; }
+        footer a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Ferramenta de Levantamento v18.2</h1>
+    <h1>Ferramenta de Levantamento v18.4</h1>
 
     <div class="bloco">
         <h2>Dados do Beneficiário</h2>
@@ -112,17 +97,16 @@
             <pre id="resumo"></pre>
         </div>
     </div>
-
+    
     <footer>
         Desenvolvido por 
         <a href="https://github.com/menezesdouglas" target="_blank" rel="noopener noreferrer">Douglas Menezes</a> 
         & 
-        <a href="https://github.com/vitoriamignon" target="_blank" rel="noopener noreferrer">Vitória Mignon</a>
+        <a href="https://github.com/vitoriamignon" target="_blank" rel="noopener noreferrer">Nome da Esposa</a>
     </footer>
 </div>
 
 <script>
-// ... (Todo o JavaScript permanece exatamente o mesmo)
 window.jsPDF = window.jspdf.jsPDF;
 let nextId = 0;
 
@@ -170,7 +154,10 @@ const SERVICOS_DB = {
 };
 
 function popularSelectServicos(selectElement, tiposFiltro) {
-    selectElement.innerHTML = '<option value="">-- Escolha um serviço --</option>';
+    selectElement.innerHTML = `
+        <option value="">-- Escolha um serviço --</option>
+        <option value="sem_intervencao">Sem intervenção</option>
+    `;
     tiposFiltro.forEach(tipo => {
         const optgroup = document.createElement('optgroup');
         optgroup.label = tipo.replace(/_/g, ' ').toUpperCase();
@@ -188,7 +175,10 @@ function popularSelectServicos(selectElement, tiposFiltro) {
 
 function gerarCamposServico(servicoDiv, servicoKey) {
     const camposDiv = servicoDiv.querySelector('.campos-especificos');
-    if (!servicoKey || !camposDiv) { camposDiv.innerHTML = ''; return; }
+    if (!servicoKey || servicoKey === 'sem_intervencao') { 
+        camposDiv.innerHTML = ''; 
+        return; 
+    }
     camposDiv.innerHTML = ''; 
 
     const servico = SERVICOS_DB[servicoKey];
@@ -234,10 +224,17 @@ function gerarRelatorio() {
     texto += `RESPONSÁVEL TÉCNICO: ${document.getElementById('nomeResponsavel').value}\n`;
     const totaisGerais = {};
 
+    // **** FUNÇÃO ATUALIZADA AQUI ****
     const processarServico = (servicoDiv) => {
         const select = servicoDiv.querySelector('select');
         const servicoKey = select?.value;
+
         if (!servicoKey) return null;
+
+        // Se for "sem intervenção", retorna um objeto especial para o relatório
+        if (servicoKey === 'sem_intervencao') {
+            return { nome: "Sem intervenção", isIntervention: false };
+        }
 
         const servico = SERVICOS_DB[servicoKey];
         let quant = 0, detalhe = '';
@@ -281,7 +278,8 @@ function gerarRelatorio() {
         if (quant > 0) {
             if (!totaisGerais[servico.nome]) totaisGerais[servico.nome] = { total: 0, unidade: servico.unidade };
             totaisGerais[servico.nome].total += quant;
-            return { nome: servico.nome, quant: quant, unidade: servico.unidade, detalhe };
+            // Adiciona a flag 'isIntervention' para serviços reais
+            return { nome: servico.nome, quant: quant, unidade: servico.unidade, detalhe, isIntervention: true };
         }
         return null;
     };
@@ -292,7 +290,14 @@ function gerarRelatorio() {
     texto += `\n----------------------------------------\nCOBERTURA | Área: ${areaTelhado.toFixed(2)} m² | PD Máx: ${pdMax.toFixed(2)}m | PD Mín: ${pdMin.toFixed(2)}m\n----------------------------------------\n`;
     document.querySelectorAll('#bloco-cobertura .servico-item').forEach(servicoDiv => {
         const res = processarServico(servicoDiv);
-        if (res) texto += `▪ ${res.nome} = ${res.quant.toFixed(2)} ${res.unidade}\n`;
+        // **** LÓGICA DE EXIBIÇÃO ATUALIZADA ****
+        if (res) {
+            if (res.isIntervention) {
+                 texto += `▪ ${res.nome} = ${res.quant.toFixed(2)} ${res.unidade}\n`;
+            } else {
+                 texto += `▪ ${res.nome}\n`;
+            }
+        }
     });
 
     document.querySelectorAll('#listaComodos > .bloco').forEach(comodoDiv => {
@@ -306,9 +311,14 @@ function gerarRelatorio() {
             texto += `\n◊ Parede ${index + 1} (${comp.toFixed(2)}m):\n`;
             paredeDiv.querySelectorAll('.servico-item').forEach(servicoDiv => {
                 const res = processarServico(servicoDiv);
+                // **** LÓGICA DE EXIBIÇÃO ATUALIZADA ****
                 if (res) {
-                    const casasDecimais = res.unidade === 'm³' ? 3 : (res.unidade === 'un' ? 0 : 2);
-                    texto += `  ▪ ${res.nome} = ${res.quant.toFixed(casasDecimais)} ${res.unidade} ${res.detalhe}\n`;
+                    if (res.isIntervention) {
+                        const casasDecimais = res.unidade === 'm³' ? 3 : (res.unidade === 'un' ? 0 : 2);
+                        texto += `  ▪ ${res.nome} = ${res.quant.toFixed(casasDecimais)} ${res.unidade} ${res.detalhe}\n`;
+                    } else {
+                        texto += `  ▪ ${res.nome}\n`;
+                    }
                 }
             });
         });
@@ -320,8 +330,13 @@ function gerarRelatorio() {
                 const res = processarServico(servicoDiv);
                 if(res) {
                     hasContent = true;
-                     const casasDecimais = res.unidade === 'm³' ? 3 : (res.unidade === 'un' ? 0 : 2);
-                    subTexto += `  ▪ ${res.nome} = ${res.quant.toFixed(casasDecimais)} ${res.unidade} ${res.detalhe}\n`;
+                    // **** LÓGICA DE EXIBIÇÃO ATUALIZADA ****
+                    if (res.isIntervention) {
+                        const casasDecimais = res.unidade === 'm³' ? 3 : (res.unidade === 'un' ? 0 : 2);
+                        subTexto += `  ▪ ${res.nome} = ${res.quant.toFixed(casasDecimais)} ${res.unidade} ${res.detalhe}\n`;
+                    } else {
+                        subTexto += `  ▪ ${res.nome}\n`;
+                    }
                 }
             });
             if (hasContent) texto += subTexto;
@@ -338,7 +353,11 @@ function gerarRelatorio() {
             const res = processarServico(servicoDiv);
             if(res) {
                 temServicosGerais = true;
-                textoServicosGerais += `  ▪ ${res.nome} = ${res.quant.toFixed(0)} ${res.unidade} ${res.detalhe}\n`;
+                if (res.isIntervention) {
+                    textoServicosGerais += `  ▪ ${res.nome} = ${res.quant.toFixed(0)} ${res.unidade} ${res.detalhe}\n`;
+                } else {
+                    textoServicosGerais += `  ▪ ${res.nome}\n`;
+                }
             }
         });
         if (temServicosGerais) texto += textoServicosGerais;
@@ -556,7 +575,9 @@ document.addEventListener('change', (e) => {
             gerarCamposServico(servicoDiv, target.value);
             const header = servicoDiv.querySelector('.service-header');
             if(target.value) {
-                const serviceName = target.options[target.selectedIndex].text;
+                const serviceName = (target.value === 'sem_intervencao')
+                    ? 'Sem intervenção'
+                    : target.options[target.selectedIndex].text;
                 header.innerHTML = `<strong>${serviceName}</strong><button class="btn-toggle-service" data-action="toggle-service">Fechar Serviço</button>`;
             } else {
                 header.innerHTML = '';
