@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Levantamento Habitacional v19.1</title>
+    <title>Levantamento Habitacional v19.2</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; background-color: #f8f9fa; color: #212529; }
         .container { max-width: 900px; margin: 20px auto; background-color: #ffffff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        h1, h2, h3, h4 { color: #0056b3; border-bottom: 2px solid #e9ecef; padding-bottom: 8px; }
+        h1, h2, h3, h4, h5 { color: #0056b3; border-bottom: 2px solid #e9ecef; padding-bottom: 8px; }
         h4 { margin-top: 30px; }
+        h3, h5 { display: flex; justify-content: space-between; align-items: center; } /* Alinha o título e o botão */
         .bloco { border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 25px; background-color: #fff; }
         .parede-bloco, .piso-bloco { border: 1px solid #ced4da; border-radius: 5px; padding: 15px; margin-top: 15px; background-color: #f8f9fa; }
         .campo { margin-bottom: 15px; }
@@ -26,23 +27,29 @@
         .btn-toggle, .btn-toggle-service { background-color: #ffc107; color: black; font-size: 14px; padding: 8px 12px; }
         .btn-toggle:hover, .btn-toggle-service:hover { background-color: #e0a800; }
         .btn-add-small { font-size: 14px; padding: 8px 12px; margin-top: 5px; }
-
-        /* ===== ESTILO DO BOTÃO REMOVER ATUALIZADO AQUI ===== */
+        
         .btn-remove {
             background: transparent;
             border: none;
-            color: #dc3545;
-            font-size: 1.1em;
-            font-weight: bold;
-            padding: 0;
+            color: #6c757d; /* Cinza sutil */
+            padding: 5px;
             margin: 0;
-            margin-left: 10px; /* Espaço entre ele e o botão anterior */
+            margin-left: 10px;
             cursor: pointer;
-            line-height: 1; /* Alinhamento vertical */
-            float: none; /* Removido para funcionar com flexbox */
+            line-height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .btn-remove svg {
+            width: 18px;
+            height: 18px;
         }
         .btn-remove:hover {
-            color: #343a40; /* Cor mais escura ao passar o mouse */
+            color: #dc3545; /* Vermelho no hover */
+            background-color: #f1f1f1;
         }
         
         #resumo-container { background-color: #e9ecef; border-left: 5px solid #0056b3; margin-top: 20px; padding: 20px; border-radius: 5px; font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace; font-size: 14px; }
@@ -51,15 +58,15 @@
         .hidden { display: none; }
         .servico-item { padding: 15px; border: 1px solid #e9ecef; border-radius: 4px; margin-top: 10px; }
         
-        /* Ajuste no cabeçalho para alinhar os botões à direita */
         .service-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
+            gap: 10px; /* Espaçamento entre nome e botões */
         }
-        .service-header strong { font-size: 1.1em; }
-        .header-buttons { display: flex; align-items: center; }
+        .service-header strong { font-size: 1.1em; flex-grow: 1; }
+        .header-buttons { display: flex; align-items: center; flex-shrink: 0; }
 
         footer { text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid #dee2e6; font-size: 14px; color: #6c757d; }
         footer a { color: #0056b3; text-decoration: none; font-weight: 600; }
@@ -69,7 +76,7 @@
 <body>
 
 <div class="container">
-    <h1>Ferramenta de Levantamento v19.1</h1>
+    <h1>Ferramenta de Levantamento v19.2</h1>
 
     <div class="bloco">
         <h2>Dados do Beneficiário</h2>
@@ -134,7 +141,8 @@
 </div>
 
 <script>
-// ... (Todo o JS inicial até "handleAppActions" permanece o mesmo) ...
+const REMOVE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>`;
+
 window.jsPDF = window.jspdf.jsPDF;
 let nextId = 0;
 
@@ -444,7 +452,7 @@ function handleAppActions(e) {
             comodoDiv.id = comodoId;
             comodoDiv.setAttribute('data-bloco-type', 'comodo');
             comodoDiv.innerHTML = `
-                <h3>Novo Cômodo <button class="btn-remove" data-action="remove-element" data-target-id="${comodoId}">Remover</button></h3>
+                <h3><span>Novo Cômodo</span><button class="btn-remove" data-action="remove-element" data-target-id="${comodoId}">${REMOVE_ICON_SVG}</button></h3>
                 <div class="collapsible-content">
                     <div class="campo"><label>Nome do Cômodo:</label><input type="text" class="comodo-nome" placeholder="Ex: Cozinha"></div>
                     <div class="grid-3-col">
@@ -486,7 +494,7 @@ function handleAppActions(e) {
             paredeDiv.className = 'parede-bloco';
             paredeDiv.id = paredeId;
             paredeDiv.innerHTML = `
-                <h5>Parede ${numParedes} <button class="btn-remove" data-action="remove-element" data-target-id="${paredeId}">X</button></h5>
+                <h5><span>Parede ${numParedes}</span><button class="btn-remove" data-action="remove-element" data-target-id="${paredeId}">${REMOVE_ICON_SVG}</button></h5>
                 <div class="campo"><label>Comprimento da Parede (m):</label><input type="number" class="parede-comprimento"></div>
                 <div class="servicos-container"></div>
                 <button class="btn-add btn-add-small" data-action="add-servico-parede">Adicionar Serviço à Parede</button>
@@ -629,13 +637,11 @@ function handleAppActions(e) {
         const select = document.createElement('select');
         popularSelectServicos(select, tipos);
 
-        // ===== LÓGICA DE CRIAÇÃO DO SERVIÇO ATUALIZADA =====
-        // Cria um cabeçalho que já contém o botão de remover.
         servicoDiv.innerHTML = `
             <div class="service-header">
                 <strong></strong>
                 <div class="header-buttons">
-                    <button class="btn-remove" data-action="remove-element" data-target-id="${servicoId}">(x)</button>
+                    <button class="btn-remove" data-action="remove-element" data-target-id="${servicoId}">${REMOVE_ICON_SVG}</button>
                 </div>
             </div>
             <div class="service-collapsible-content"></div>
@@ -672,7 +678,6 @@ document.addEventListener('input', (e) => {
     }
 });
 
-// ===== LÓGICA DO EVENTO 'CHANGE' TOTALMENTE REFEITA PARA CORRIGIR O BUG =====
 document.addEventListener('change', (e) => {
     const target = e.target;
     if (target.matches('select')) {
@@ -687,20 +692,18 @@ document.addEventListener('change', (e) => {
                     ? 'Sem intervenção'
                     : target.options[target.selectedIndex].text;
                 
-                // Reconstrói o cabeçalho com todos os botões na ordem correta
                 header.innerHTML = `
                     <strong>${serviceName}</strong>
                     <div class="header-buttons">
                         <button class="btn-toggle-service" data-action="toggle-service">Fechar Serviço</button>
-                        <button class="btn-remove" data-action="remove-element" data-target-id="${servicoId}">(x)</button>
+                        <button class="btn-remove" data-action="remove-element" data-target-id="${servicoId}">${REMOVE_ICON_SVG}</button>
                     </div>
                 `;
             } else {
-                // Se a seleção for limpa, reconstrói o cabeçalho apenas com o nome vazio e o botão remover
                 header.innerHTML = `
                     <strong></strong>
                     <div class="header-buttons">
-                        <button class="btn-remove" data-action="remove-element" data-target-id="${servicoId}">(x)</button>
+                        <button class="btn-remove" data-action="remove-element" data-target-id="${servicoId}">${REMOVE_ICON_SVG}</button>
                     </div>
                 `;
             }
@@ -708,8 +711,6 @@ document.addEventListener('change', (e) => {
     }
 });
 
-
-// Listener unificado para click e touch
 ['click', 'touchend'].forEach(evt => {
     document.addEventListener(evt, handleAppActions);
 });
