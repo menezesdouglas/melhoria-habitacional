@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Levantamento Habitacional v18.4</title>
+    <title>Levantamento Habitacional v19.1</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -26,14 +26,41 @@
         .btn-toggle, .btn-toggle-service { background-color: #ffc107; color: black; font-size: 14px; padding: 8px 12px; }
         .btn-toggle:hover, .btn-toggle-service:hover { background-color: #e0a800; }
         .btn-add-small { font-size: 14px; padding: 8px 12px; margin-top: 5px; }
-        .btn-remove { background-color: #dc3545; font-size: 12px; padding: 5px 10px; float: right; }
+
+        /* ===== ESTILO DO BOTÃO REMOVER ATUALIZADO AQUI ===== */
+        .btn-remove {
+            background: transparent;
+            border: none;
+            color: #dc3545;
+            font-size: 1.1em;
+            font-weight: bold;
+            padding: 0;
+            margin: 0;
+            margin-left: 10px; /* Espaço entre ele e o botão anterior */
+            cursor: pointer;
+            line-height: 1; /* Alinhamento vertical */
+            float: none; /* Removido para funcionar com flexbox */
+        }
+        .btn-remove:hover {
+            color: #343a40; /* Cor mais escura ao passar o mouse */
+        }
+        
         #resumo-container { background-color: #e9ecef; border-left: 5px solid #0056b3; margin-top: 20px; padding: 20px; border-radius: 5px; font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace; font-size: 14px; }
         #resumo { white-space: pre-wrap; word-wrap: break-word; }
         .grid-3-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
         .hidden { display: none; }
         .servico-item { padding: 15px; border: 1px solid #e9ecef; border-radius: 4px; margin-top: 10px; }
-        .service-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        
+        /* Ajuste no cabeçalho para alinhar os botões à direita */
+        .service-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
         .service-header strong { font-size: 1.1em; }
+        .header-buttons { display: flex; align-items: center; }
+
         footer { text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid #dee2e6; font-size: 14px; color: #6c757d; }
         footer a { color: #0056b3; text-decoration: none; font-weight: 600; }
         footer a:hover { text-decoration: underline; }
@@ -42,7 +69,7 @@
 <body>
 
 <div class="container">
-    <h1>Ferramenta de Levantamento v18.4</h1>
+    <h1>Ferramenta de Levantamento v19.1</h1>
 
     <div class="bloco">
         <h2>Dados do Beneficiário</h2>
@@ -102,11 +129,12 @@
         Desenvolvido por 
         <a href="https://github.com/menezesdouglas" target="_blank" rel="noopener noreferrer">Douglas Menezes</a> 
         & 
-        <a href="https://github.com/vitoriamignon" target="_blank" rel="noopener noreferrer">Nome da Esposa</a>
+        <a href="https://github.com/vitoriamignon" target="_blank" rel="noopener noreferrer">Vitoria Mignon</a>
     </footer>
 </div>
 
 <script>
+// ... (Todo o JS inicial até "handleAppActions" permanece o mesmo) ...
 window.jsPDF = window.jspdf.jsPDF;
 let nextId = 0;
 
@@ -224,14 +252,12 @@ function gerarRelatorio() {
     texto += `RESPONSÁVEL TÉCNICO: ${document.getElementById('nomeResponsavel').value}\n`;
     const totaisGerais = {};
 
-    // **** FUNÇÃO ATUALIZADA AQUI ****
     const processarServico = (servicoDiv) => {
         const select = servicoDiv.querySelector('select');
         const servicoKey = select?.value;
 
         if (!servicoKey) return null;
 
-        // Se for "sem intervenção", retorna um objeto especial para o relatório
         if (servicoKey === 'sem_intervencao') {
             return { nome: "Sem intervenção", isIntervention: false };
         }
@@ -278,7 +304,6 @@ function gerarRelatorio() {
         if (quant > 0) {
             if (!totaisGerais[servico.nome]) totaisGerais[servico.nome] = { total: 0, unidade: servico.unidade };
             totaisGerais[servico.nome].total += quant;
-            // Adiciona a flag 'isIntervention' para serviços reais
             return { nome: servico.nome, quant: quant, unidade: servico.unidade, detalhe, isIntervention: true };
         }
         return null;
@@ -290,7 +315,6 @@ function gerarRelatorio() {
     texto += `\n----------------------------------------\nCOBERTURA | Área: ${areaTelhado.toFixed(2)} m² | PD Máx: ${pdMax.toFixed(2)}m | PD Mín: ${pdMin.toFixed(2)}m\n----------------------------------------\n`;
     document.querySelectorAll('#bloco-cobertura .servico-item').forEach(servicoDiv => {
         const res = processarServico(servicoDiv);
-        // **** LÓGICA DE EXIBIÇÃO ATUALIZADA ****
         if (res) {
             if (res.isIntervention) {
                  texto += `▪ ${res.nome} = ${res.quant.toFixed(2)} ${res.unidade}\n`;
@@ -311,7 +335,6 @@ function gerarRelatorio() {
             texto += `\n◊ Parede ${index + 1} (${comp.toFixed(2)}m):\n`;
             paredeDiv.querySelectorAll('.servico-item').forEach(servicoDiv => {
                 const res = processarServico(servicoDiv);
-                // **** LÓGICA DE EXIBIÇÃO ATUALIZADA ****
                 if (res) {
                     if (res.isIntervention) {
                         const casasDecimais = res.unidade === 'm³' ? 3 : (res.unidade === 'un' ? 0 : 2);
@@ -330,7 +353,6 @@ function gerarRelatorio() {
                 const res = processarServico(servicoDiv);
                 if(res) {
                     hasContent = true;
-                    // **** LÓGICA DE EXIBIÇÃO ATUALIZADA ****
                     if (res.isIntervention) {
                         const casasDecimais = res.unidade === 'm³' ? 3 : (res.unidade === 'un' ? 0 : 2);
                         subTexto += `  ▪ ${res.nome} = ${res.quant.toFixed(casasDecimais)} ${res.unidade} ${res.detalhe}\n`;
@@ -502,6 +524,87 @@ function handleAppActions(e) {
             target.textContent = serviceContent.classList.contains('hidden') ? 'Editar Serviço' : 'Fechar Serviço';
             return;
         case 'gerar-relatorio':
+            let erroDeValidacao = null;
+            const todosOsServicos = document.querySelectorAll('.servico-item');
+
+            for (const servicoDiv of todosOsServicos) {
+                const select = servicoDiv.querySelector('select');
+                if (!select || !select.value || select.value === 'sem_intervencao') {
+                    continue;
+                }
+
+                const servicoKey = select.value;
+                const servico = SERVICOS_DB[servicoKey];
+                const nomeServico = servico.nome;
+
+                const getContexto = (el) => {
+                    const parede = el.closest('.parede-bloco');
+                    const comodo = el.closest('.bloco[data-bloco-type="comodo"]');
+                    const cobertura = el.closest('.bloco[data-bloco-type="cobertura"]');
+
+                    if (parede) {
+                        const numParede = Array.from(parede.parentElement.children).indexOf(parede) + 1;
+                        const nomeComodo = comodo.querySelector('.comodo-nome').value || 'Cômodo';
+                        return `[${nomeComodo} -> Parede ${numParede}]`;
+                    }
+                    if (comodo) {
+                        return `[${comodo.querySelector('.comodo-nome').value || 'Cômodo'}]`;
+                    }
+                    if (cobertura) {
+                        return '[Cobertura]';
+                    }
+                    return '[Local não identificado]';
+                };
+                const contexto = getContexto(servicoDiv);
+
+                const checkInput = (selector, fieldName) => {
+                    const input = servicoDiv.querySelector(selector);
+                    if (input && (input.value === '' || input.value === null)) {
+                        return `ERRO: Preencha o campo "${fieldName}" para o serviço "${nomeServico}" em ${contexto}.`;
+                    }
+                    return null;
+                };
+                
+                const checkMainInput = (selector, fieldName, contextElement) => {
+                     const input = contextElement.querySelector(selector);
+                     if (input && (input.value === '' || input.value === null)) {
+                        return `ERRO: Preencha o campo "${fieldName}" em ${contexto} para calcular o serviço "${nomeServico}".`;
+                     }
+                     return null;
+                };
+
+                switch (servico.tipo) {
+                    case 'parede_area_custom':
+                        erroDeValidacao = checkInput('[name="custom_comp"]', 'Comprimento a aplicar') || checkInput('[name="custom_alt"]', 'Altura a aplicar');
+                        break;
+                    case 'parede_vol_custom':
+                        erroDeValidacao = checkInput('[name="custom_comp"]', 'Comprimento a demolir') || checkInput('[name="custom_alt"]', 'Altura a demolir');
+                        break;
+                    case 'cobertura_linear':
+                        erroDeValidacao = checkInput('[name="medida"]', 'Comprimento');
+                        break;
+                    case 'cobertura':
+                         erroDeValidacao = checkMainInput('#areaTelhado', 'Área do Telhado', document.getElementById('bloco-cobertura'));
+                         break;
+                    case 'piso_custom':
+                    case 'piso_vol_custom':
+                         erroDeValidacao = checkMainInput('.comodo-area-piso', 'Área do Piso', servicoDiv.closest('.bloco'));
+                         break;
+                    case 'teto_custom':
+                         erroDeValidacao = checkMainInput('.comodo-area-teto', 'Área do Teto', servicoDiv.closest('.bloco'));
+                         break;
+                }
+
+                if (erroDeValidacao) {
+                    break; 
+                }
+            }
+
+            if (erroDeValidacao) {
+                alert(erroDeValidacao);
+                return;
+            }
+
             document.querySelectorAll('.collapsible-content, .service-collapsible-content').forEach(el => el.classList.remove('hidden'));
             document.querySelectorAll('[data-action="toggle-collapse"]').forEach(btn => btn.textContent = 'Concluir Seção');
             document.querySelectorAll('[data-action="toggle-service"]').forEach(btn => btn.textContent = 'Fechar Serviço');
@@ -526,20 +629,22 @@ function handleAppActions(e) {
         const select = document.createElement('select');
         popularSelectServicos(select, tipos);
 
-        servicoDiv.innerHTML = `<div class="service-header"></div><div class="service-collapsible-content"></div>`;
-        const header = servicoDiv.querySelector('.service-header');
-        const content = servicoDiv.querySelector('.service-collapsible-content');
+        // ===== LÓGICA DE CRIAÇÃO DO SERVIÇO ATUALIZADA =====
+        // Cria um cabeçalho que já contém o botão de remover.
+        servicoDiv.innerHTML = `
+            <div class="service-header">
+                <strong></strong>
+                <div class="header-buttons">
+                    <button class="btn-remove" data-action="remove-element" data-target-id="${servicoId}">(x)</button>
+                </div>
+            </div>
+            <div class="service-collapsible-content"></div>
+        `;
         
-        const removeBtn = document.createElement('button');
-        removeBtn.className = 'btn-remove';
-        removeBtn.dataset.action = 'remove-element';
-        removeBtn.dataset.targetId = servicoId;
-        removeBtn.textContent = 'X';
-
+        const content = servicoDiv.querySelector('.service-collapsible-content');
         const label = document.createElement('label');
         label.textContent = 'Serviço:';
 
-        header.appendChild(removeBtn);
         content.appendChild(label);
         content.appendChild(select);
         content.innerHTML += `<div class="campos-especificos" style="margin-top:10px;"></div>`;
@@ -567,6 +672,7 @@ document.addEventListener('input', (e) => {
     }
 });
 
+// ===== LÓGICA DO EVENTO 'CHANGE' TOTALMENTE REFEITA PARA CORRIGIR O BUG =====
 document.addEventListener('change', (e) => {
     const target = e.target;
     if (target.matches('select')) {
@@ -574,17 +680,34 @@ document.addEventListener('change', (e) => {
         if (servicoDiv) {
             gerarCamposServico(servicoDiv, target.value);
             const header = servicoDiv.querySelector('.service-header');
-            if(target.value) {
+            const servicoId = servicoDiv.id;
+
+            if (target.value) {
                 const serviceName = (target.value === 'sem_intervencao')
                     ? 'Sem intervenção'
                     : target.options[target.selectedIndex].text;
-                header.innerHTML = `<strong>${serviceName}</strong><button class="btn-toggle-service" data-action="toggle-service">Fechar Serviço</button>`;
+                
+                // Reconstrói o cabeçalho com todos os botões na ordem correta
+                header.innerHTML = `
+                    <strong>${serviceName}</strong>
+                    <div class="header-buttons">
+                        <button class="btn-toggle-service" data-action="toggle-service">Fechar Serviço</button>
+                        <button class="btn-remove" data-action="remove-element" data-target-id="${servicoId}">(x)</button>
+                    </div>
+                `;
             } else {
-                header.innerHTML = '';
+                // Se a seleção for limpa, reconstrói o cabeçalho apenas com o nome vazio e o botão remover
+                header.innerHTML = `
+                    <strong></strong>
+                    <div class="header-buttons">
+                        <button class="btn-remove" data-action="remove-element" data-target-id="${servicoId}">(x)</button>
+                    </div>
+                `;
             }
         }
     }
 });
+
 
 // Listener unificado para click e touch
 ['click', 'touchend'].forEach(evt => {
