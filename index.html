@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Levantamento Habitacional v19.6</title>
+    <title>Levantamento Habitacional v19.7</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -76,7 +76,7 @@
 <body>
 
 <div class="container">
-    <h1>Ferramenta de Levantamento v19.6</h1>
+    <h1>Ferramenta de Levantamento v19.7</h1>
     <div class="bloco">
         <h2>Dados do Beneficiário</h2>
          <div class="collapsible-content">
@@ -193,10 +193,16 @@ const SERVICOS_DB = {
     "revestimento_ceramico_piso": { nome: "Piso em revestimento cerâmico", unidade: "m²", tipo: "piso_custom" },
     "lastro_concreto": { nome: "Lastro de concreto", unidade: "m³", tipo: "piso_vol_custom" },
     
-    // ===== SERVIÇOS DE TETO =====
-    "forro_pvc": { nome: "Forro de PVC", unidade: "m²", tipo: "teto_custom" },
-    "ponto_iluminacao": { nome: "Ponto de iluminação c/ lâmpada LED", unidade: "un", tipo: "unitario_teto" },
-    
+    // ===== SERVIÇOS DE TETO (ATUALIZADO) =====
+    "remocao_forro_estuque_gesso": { nome: "Remoção de forro de estuque, gesso, placas prensadas", unidade: "m²", tipo: "teto_custom" },
+    "remocao_forro_lambri_madeira_pvc": { nome: "Remoção de forro ou lambri de madeira ou PVC", unidade: "m²", tipo: "teto_custom" },
+    "forro_pvc_reguas_200mm": { nome: "Forro de PVC em réguas de 200mm (inclusive estrutura)", unidade: "m²", tipo: "teto_custom" },
+    "instalacao_ponto_luz_2varas": { nome: "Instalação de ponto de luz (equiv. 2 varas de eletroduto)", unidade: "un", tipo: "unitario_teto" },
+    "instalacao_conjunto_2pontos_luz": { nome: "Instalação de conjunto de 2 pontos de luz (equiv. 5 varas)", unidade: "un", tipo: "unitario_teto" },
+    "instalacao_conjunto_3pontos_luz": { nome: "Instalação de conjunto de 3 pontos de luz (equiv. 6 varas)", unidade: "un", tipo: "unitario_teto" },
+    "lampada_led_bulbo_a60": { nome: "Lâmpada LED, bulbo, A60, 8W", unidade: "un", tipo: "unitario_teto" },
+    "globo_esferico_plafonier": { nome: "Globo esférico 10x15cm e plafonier em alumínio", unidade: "un", tipo: "unitario_teto" },
+
     // ===== EQUIPAMENTOS GERAIS =====
     "caixa_agua_1000l": { nome: "Caixa d'água de polietileno 1000L", unidade: "un", tipo: "equipamento_geral" },
 };
