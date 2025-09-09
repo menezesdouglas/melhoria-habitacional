@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Levantamento Habitacional v19.8</title>
+    <title>Levantamento Habitacional v20.3</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -76,7 +76,7 @@
 <body>
 
 <div class="container">
-    <h1>Ferramenta de Levantamento v19.8</h1>
+    <h1>Ferramenta de Levantamento v20.3</h1>
     <div class="bloco">
         <h2>Dados do Beneficiário</h2>
          <div class="collapsible-content">
@@ -182,15 +182,23 @@ const SERVICOS_DB = {
     "vaso_sanitario_parede": { nome: "Vaso sanitário com caixa acoplada", unidade: "un", tipo: "unitario_parede" },
     "tanque_louca_parede": { nome: "Tanque de louça", unidade: "un", tipo: "unitario_parede" },
 
-    // ===== SERVIÇOS DE PISO =====
-    "remocao_piso_ceramico": { nome: "Arrancamento de piso cerâmico", unidade: "m²", tipo: "piso_custom" },
-    "demolicao_piso_cimentado": { nome: "Demolição de piso cimentado", unidade: "m²", tipo: "piso_custom" },
-    "contrapiso_1_5cm": { nome: "Contrapiso de argamassa e=1,5cm", unidade: "m²", tipo: "piso_custom" },
-    "contrapiso_5cm": { nome: "Contrapiso de argamassa e=5cm", unidade: "m²", tipo: "piso_custom" },
-    "revestimento_ceramico_piso": { nome: "Piso em revestimento cerâmico", unidade: "m²", tipo: "piso_custom" },
-    "lastro_concreto": { nome: "Lastro de concreto", unidade: "m³", tipo: "piso_vol_custom" },
+    // ===== SERVIÇOS DE PISO (ATUALIZADO) =====
+    "enchimento_piso_concreto": { nome: "ENCHIMENTO DE PISO COM ESCOMBRO DAS PROPRIAS EDIFICACOES, ATE UMA ALTURA MAXIMA DE 80CM", unidade: "M3", tipo: "piso_vol_custom" },
+    "demolicao_piso_ladrilho": { nome: "DEMOLICAO DE PISO DE LADRILHO COM RESPECTIVA CAMADA DE ARGAMASSA DE ASSENTAMENTO", unidade: "M2", tipo: "piso_custom" },
+    "demolicao_manual_piso_cimentado": { nome: "DEMOLICAO MANUAL DE PISO CIMENTADO E DA RESPECTIVA BASE DE CONCRETO", unidade: "M2", tipo: "piso_custom" },
+    "piso_cimentado_1_5cm": { nome: "PISO CIMENTADO,COM 1,5CM DE ESPESSURA,COM ARGAMASSA DE CIMENTO E AREIA,NO TRACO 1:3", unidade: "M2", tipo: "piso_custom" },
+    "contrapiso_regularizadora_1_5cm": { nome: "CONTRAPISO,BASE OU CAMADA REGULARIZADORA,EXECUTADA COM ARGAMASSA DE CIMENTO A AREIA,NO TRACO 1:4,NA ESPESSURA DE 1,5CM", unidade: "M2", tipo: "piso_custom" },
+    "contrapiso_regularizadora_5cm": { nome: "CONTRAPISO,BASE OU CAMADA REGULARIZADORA,EXECUTADA COM ARGAMASSA DE CIMENTO E AREIA,NO TRACO 1:4,NA ESPESSURA DE 5CM", unidade: "M2", tipo: "piso_custom" },
+    "revestimento_ceramico_antiderrapante_45x45": { nome: "REVESTIMENTO DE PISO COM LADRILHO CERAMICO,ANTIDERRAPANTE,MEDIDAS EM TORNO DE (45x45)CM", unidade: "M2", tipo: "piso_custom" },
+    "soleira_granito_cinza_andorinha_2cm_15_18cm": { nome: "SOLEIRA EM GRANITO CINZA ANDORINHA,ESPESSURA DE 2CM, LARGURA15 A 18CM", unidade: "M", tipo: "piso_linear" },
+    "soleira_granito_cinza_andorinha_2cm_20_22cm": { nome: "SOLEIRA EM GRANITO CINZA ANDORINHA,ESPESSURA DE 2CM,COM 2 POLIMENTOS, LARGURA DE 20-22CM", unidade: "M", tipo: "piso_linear" },
+    "pedra_box_banheiro_granito_tento_5cm": { nome: "PEDRA PARA BOX DE BANHEIRO EM GRANITO (TENTO), SEM REBAIXO, COM 5CM DE ALTURA", unidade: "M", tipo: "piso_linear" },
+    "rodape_ladrilho_ceramico_7_10cm": { nome: "RODAPE COM LADRILHO CERAMICO,COM 7,5 A 10CM DE ALTURA", unidade: "M", tipo: "piso_linear" },
+    "peitoril_granito_cinza_andorinha_2cm_15_18cm": { nome: "PEITORIL EM GRANITO CINZA ANDORINHA,ESPESSURA DE 2CM,LARGURA15 A 18CM", unidade: "M", tipo: "piso_linear" },
+    "soleira_granito_cinza_andorinha_2cm_15_20cm": { nome: "SOLEIRA EM GRANITO CINZA ANDORINHA,ESPESSURA DE 2CM,COM 2 POLIMENTOS, LARGURA DE 15-20CM", unidade: "M", tipo: "piso_linear" },
+    "pedra_box_banheiro_granito_tento_reto_5cm": { nome: "PEDRA PARA BOX DE BANHEIRO EM GRANITO (TENTO), SEM REBAIXO, COM 5CM DE ALTURA, ASSENTE COMO EM 13.045.0040", unidade: "M", tipo: "piso_linear" },
     
-    // ===== SERVIÇOS DE TETO (ATUALIZADO) =====
+    // ===== SERVIÇOS DE TETO =====
     "remocao_forro_estuque_gesso": { nome: "Remoção de forro de estuque, gesso, placas prensadas", unidade: "m²", tipo: "teto_custom" },
     "remocao_forro_lambri_madeira_pvc": { nome: "Remoção de forro ou lambri de madeira ou PVC", unidade: "m²", tipo: "teto_custom" },
     "forro_pvc_reguas_200mm": { nome: "Forro de PVC em réguas de 200mm (inclusive estrutura)", unidade: "m²", tipo: "teto_custom" },
@@ -200,7 +208,7 @@ const SERVICOS_DB = {
     "lampada_led_bulbo_a60": { nome: "Lâmpada LED, bulbo, A60, 8W", unidade: "un", tipo: "unitario_teto" },
     "globo_esferico_plafonier": { nome: "Globo esférico 10x15cm e plafonier em alumínio", unidade: "un", tipo: "unitario_teto" },
     
-    // ===== REPARO ESTRUTURAL (NOVO) =====
+    // ===== REPARO ESTRUTURAL =====
     "reparacao_estrutural_geral": { nome: "Reparação estrutural (remoção, limpeza, tratamento, recomposição)", unidade: "m²", tipo: "estrutural_area" },
     "concreto_baldrames_15x40": { nome: "Formas, armaduras e concreto para baldrames 15x40cm", unidade: "m", tipo: "estrutural_linear" },
     "concreto_sapata_60x60x30": { nome: "Formas, armaduras e concreto para sapata 60x60x30cm", unidade: "un", tipo: "estrutural_unitario" },
@@ -244,7 +252,7 @@ function gerarCamposServico(servicoDiv, servicoKey) {
 
     switch (servico.tipo) {
         case 'parede_area_custom':
-        case 'estrutural_area': // NOVO
+        case 'estrutural_area':
             html = `<p>Informe as medidas exatas da área de aplicação:</p>
                     <div class="campo"><label>Comprimento a aplicar (m):</label><input type="number" name="custom_comp" placeholder="Ex: 3.21"></div>
                     <div class="campo"><label>Largura a aplicar (m):</label><input type="number" name="custom_larg" placeholder="Ex: 0.50"></div>
@@ -268,12 +276,13 @@ function gerarCamposServico(servicoDiv, servicoKey) {
              break;
         case 'cobertura': html = `<p>O cálculo usará a área do telhado informada.</p>`; break;
         case 'cobertura_linear':
-        case 'estrutural_linear': // NOVO
+        case 'estrutural_linear':
+        case 'piso_linear':
             html = `<div class="campo"><label>Comprimento (m):</label><input type="number" name="medida"></div>`; break;
         case 'unitario_parede':
         case 'equipamento_geral':
         case 'unitario_teto':
-        case 'estrutural_unitario': // NOVO
+        case 'estrutural_unitario':
             html = `<div class="campo"><label>Quantidade:</label><input type="number" name="quantidade" value="1" step="1"></div>`; break;
     }
     camposDiv.innerHTML = html;
@@ -307,7 +316,8 @@ function gerarRelatorio() {
         switch (servico.tipo) {
             case 'cobertura': quant = getVal('#areaTelhado', coberturaDiv); break;
             case 'cobertura_linear': 
-            case 'estrutural_linear': // NOVO
+            case 'estrutural_linear':
+            case 'piso_linear':
                 quant = getVal('[name=medida]', servicoDiv); 
                 break;
             case 'parede_area_custom':
@@ -316,7 +326,7 @@ function gerarRelatorio() {
                 quant = customCompArea * customAltArea;
                 detalhe = `(${customCompArea.toFixed(2)}m x ${customAltArea.toFixed(2)}m)`;
                 break;
-            case 'estrutural_area': // NOVO
+            case 'estrutural_area':
                 const compEstrutural = getVal('[name=custom_comp]', servicoDiv);
                 const largEstrutural = getVal('[name=custom_larg]', servicoDiv);
                 quant = compEstrutural * largEstrutural;
@@ -341,7 +351,7 @@ function gerarRelatorio() {
             case 'unitario_parede':
             case 'equipamento_geral':
             case 'unitario_teto':
-            case 'estrutural_unitario': // NOVO
+            case 'estrutural_unitario':
                 quant = parseInt(getVal('[name=quantidade]', servicoDiv)) || 0; break;
         }
 
@@ -390,7 +400,6 @@ function gerarRelatorio() {
             });
         });
         
-        // Loop para a nova seção Estrutural
         let textoEstrutural = '\n◊ REPARO ESTRUTURAL:\n';
         let temServicoEstrutural = false;
         comodoDiv.querySelectorAll('.estrutural-container .servico-item').forEach(servicoDiv => {
@@ -563,7 +572,7 @@ function handleAppActions(e) {
             break;
         case 'add-servico-piso':
             container = target.closest('.bloco').querySelector('.piso-container');
-            tipos = ['piso_custom', 'piso_vol_custom'];
+            tipos = ['piso_custom', 'piso_vol_custom', 'piso_linear'];
             break;
         case 'add-servico-teto':
             container = target.closest('.bloco').querySelector('.teto-container');
@@ -651,6 +660,7 @@ function handleAppActions(e) {
                         break;
                     case 'cobertura_linear':
                     case 'estrutural_linear':
+                    case 'piso_linear':
                         erroDeValidacao = checkInput('[name="medida"]', 'Comprimento');
                         break;
                     case 'cobertura':
