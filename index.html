@@ -197,7 +197,8 @@ const SERVICOS_DB = {
     "peitoril_granito_cinza_andorinha_2cm_15_18cm": { nome: "PEITORIL EM GRANITO CINZA ANDORINHA,ESPESSURA DE 2CM,LARGURA15 A 18CM", unidade: "M", tipo: "piso_linear" },
     "soleira_granito_cinza_andorinha_2cm_15_20cm": { nome: "SOLEIRA EM GRANITO CINZA ANDORINHA,ESPESSURA DE 2CM,COM 2 POLIMENTOS, LARGURA DE 15-20CM", unidade: "M", tipo: "piso_linear" },
     "pedra_box_banheiro_granito_tento_reto_5cm": { nome: "PEDRA PARA BOX DE BANHEIRO EM GRANITO (TENTO), SEM REBAIXO, COM 5CM DE ALTURA, ASSENTE COMO EM 13.045.0040", unidade: "M", tipo: "piso_linear" },
-    
+    "aterramento_completo": { nome: "ATERRAMENTO COMPOSTO POR 1 CAIXA 25X25CM, 1 HASTE DE COBRE 5/8\", 1 CONECTOR, 6M DE CABO", unidade: "UN", tipo: "piso_unitario" },
+
     // ===== SERVIÇOS DE TETO =====
     "remocao_forro_estuque_gesso": { nome: "Remoção de forro de estuque, gesso, placas prensadas", unidade: "m²", tipo: "teto_custom" },
     "remocao_forro_lambri_madeira_pvc": { nome: "Remoção de forro ou lambri de madeira ou PVC", unidade: "m²", tipo: "teto_custom" },
@@ -283,6 +284,7 @@ function gerarCamposServico(servicoDiv, servicoKey) {
         case 'equipamento_geral':
         case 'unitario_teto':
         case 'estrutural_unitario':
+        case 'piso_unitario':
             html = `<div class="campo"><label>Quantidade:</label><input type="number" name="quantidade" value="1" step="1"></div>`; break;
     }
     camposDiv.innerHTML = html;
@@ -352,6 +354,7 @@ function gerarRelatorio() {
             case 'equipamento_geral':
             case 'unitario_teto':
             case 'estrutural_unitario':
+            case 'piso_unitario':
                 quant = parseInt(getVal('[name=quantidade]', servicoDiv)) || 0; break;
         }
 
@@ -572,7 +575,7 @@ function handleAppActions(e) {
             break;
         case 'add-servico-piso':
             container = target.closest('.bloco').querySelector('.piso-container');
-            tipos = ['piso_custom', 'piso_vol_custom', 'piso_linear'];
+            tipos = ['piso_custom', 'piso_vol_custom', 'piso_linear', 'piso_unitario'];
             break;
         case 'add-servico-teto':
             container = target.closest('.bloco').querySelector('.teto-container');
@@ -685,15 +688,17 @@ function handleAppActions(e) {
                 return;
             }
 
-            document.querySelectorAll('.collapsible-content, .service-collapsible-content').forEach(el => el.classList.remove('hidden'));
-            document.querySelectorAll('[data-action="toggle-collapse"]').forEach(btn => btn.textContent = 'Concluir Seção');
-            document.querySelectorAll('[data-action="toggle-service"]').forEach(btn => btn.textContent = 'Fechar Serviço');
+            // A lógica de expandir tudo agora só acontece para o PDF.
             const textoFinal = gerarRelatorio();
             document.getElementById('resumo').textContent = textoFinal;
             document.getElementById('output').style.display = 'block';
             document.getElementById('gerarPDF').style.display = 'inline-block';
             return;
         case 'gerar-pdf':
+            // Expande tudo antes de gerar o PDF.
+            document.querySelectorAll('.collapsible-content, .service-collapsible-content').forEach(el => el.classList.remove('hidden'));
+            document.querySelectorAll('[data-action="toggle-collapse"]').forEach(btn => btn.textContent = 'Concluir Seção');
+            document.querySelectorAll('[data-action="toggle-service"]').forEach(btn => btn.textContent = 'Fechar Serviço');
             gerarPDF();
             return;
         default:
