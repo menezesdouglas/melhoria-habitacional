@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Levantamento Habitacional v19.7</title>
+    <title>Levantamento Habitacional v19.8</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -76,7 +76,7 @@
 <body>
 
 <div class="container">
-    <h1>Ferramenta de Levantamento v19.7</h1>
+    <h1>Ferramenta de Levantamento v19.8</h1>
     <div class="bloco">
         <h2>Dados do Beneficiário</h2>
          <div class="collapsible-content">
@@ -142,7 +142,6 @@ let nextId = 0;
 const SERVICOS_DB = {
     // ===== COBERTURA =====
     "estrutura_madeira_cobertura": { nome: "Estrutura em madeira para cobertura", unidade: "m²", tipo: "cobertura" },
-    // -- Coberturas Cerâmicas --
     "remocao_telha_francesa_ex_madeiramento": { nome: "Remoção de cobertura em telhas francesas (exclusivo madeiramento)", unidade: "m²", tipo: "cobertura" },
     "remocao_telha_francesa_inclusive": { nome: "Remoção de cobertura em telhas francesas (inclusive)", unidade: "m²", tipo: "cobertura" },
     "retirada_recolocacao_telhas_francesas": { nome: "Retirada e recolocação de telhas francesas (inclusive)", unidade: "m²", tipo: "cobertura" },
@@ -150,13 +149,11 @@ const SERVICOS_DB = {
     "retirada_recolocacao_madeiramento": { nome: "Retirada e recolocação de madeiramento (telhas francesas/coloniais)", unidade: "m²", tipo: "cobertura" },
     "trama_madeira_completa": { nome: "Trama de madeira (ripas, caibros, terças) para telhados de até 2 águas", unidade: "m²", tipo: "cobertura" },
     "cobertura_telha_ceramica_francesa": { nome: "Cobertura em telha ceramica francesa (exclusive cumeeira e madeiramento)", unidade: "m²", tipo: "cobertura" },
-    // -- Coberturas de Fibrocimento --
     "remocao_cobertura_fibrocimento_ex_madeiramento": { nome: "Remoção de cobertura de fibrocimento (exclusive madeiramento)", unidade: "m²", tipo: "cobertura" },
     "retirada_recolocacao_madeiramento_fibrocimento": { nome: "Retirada e recolocação de madeiramento (telhas fibrocimento)", unidade: "m²", tipo: "cobertura" },
     "remocao_cobertura_fibrocimento_inclusive": { nome: "Remoção de cobertura de fibrocimento (inclusive madeiramento)", unidade: "m²", tipo: "cobertura" },
     "madeiramento_cobertura_onduladas": { nome: "Madeiramento para cobertura em telhas onduladas", unidade: "m²", tipo: "cobertura" },
     "cobertura_telhas_crfs_6mm": { nome: "Cobertura em telhas de cimento CRFS 6mm (sem amianto)", unidade: "m²", tipo: "cobertura" },
-    // -- Peças de Madeira, Beirais, Calhas e Lineares --
     "beiral_fibrocimento_60cm": { nome: "Beiral de telhas onduladas de fibrocimento 6mm, projeção 60cm", unidade: "m", tipo: "cobertura_linear" },
     "beiral_fibrocimento_120cm": { nome: "Beiral de telhas onduladas de fibrocimento 6mm, projeção 120cm", unidade: "m", tipo: "cobertura_linear" },
     "calha_beiral_pvc_dn125": { nome: "Calha de beiral semi-circular de PVC, DN 125", unidade: "m", tipo: "cobertura_linear" },
@@ -202,6 +199,13 @@ const SERVICOS_DB = {
     "instalacao_conjunto_3pontos_luz": { nome: "Instalação de conjunto de 3 pontos de luz (equiv. 6 varas)", unidade: "un", tipo: "unitario_teto" },
     "lampada_led_bulbo_a60": { nome: "Lâmpada LED, bulbo, A60, 8W", unidade: "un", tipo: "unitario_teto" },
     "globo_esferico_plafonier": { nome: "Globo esférico 10x15cm e plafonier em alumínio", unidade: "un", tipo: "unitario_teto" },
+    
+    // ===== REPARO ESTRUTURAL (NOVO) =====
+    "reparacao_estrutural_geral": { nome: "Reparação estrutural (remoção, limpeza, tratamento, recomposição)", unidade: "m²", tipo: "estrutural_area" },
+    "concreto_baldrames_15x40": { nome: "Formas, armaduras e concreto para baldrames 15x40cm", unidade: "m", tipo: "estrutural_linear" },
+    "concreto_sapata_60x60x30": { nome: "Formas, armaduras e concreto para sapata 60x60x30cm", unidade: "un", tipo: "estrutural_unitario" },
+    "concreto_laje_h12": { nome: "Formas, armaduras e concreto para laje h=12cm", unidade: "m²", tipo: "estrutural_area" },
+    "concreto_pilares_vigas_cintas_15x30": { nome: "Formas, armaduras e concreto para pilares/vigas/cintas 15x30cm", unidade: "m", tipo: "estrutural_linear" },
 
     // ===== EQUIPAMENTOS GERAIS =====
     "caixa_agua_1000l": { nome: "Caixa d'água de polietileno 1000L", unidade: "un", tipo: "equipamento_geral" },
@@ -240,9 +244,10 @@ function gerarCamposServico(servicoDiv, servicoKey) {
 
     switch (servico.tipo) {
         case 'parede_area_custom':
+        case 'estrutural_area': // NOVO
             html = `<p>Informe as medidas exatas da área de aplicação:</p>
                     <div class="campo"><label>Comprimento a aplicar (m):</label><input type="number" name="custom_comp" placeholder="Ex: 3.21"></div>
-                    <div class="campo"><label>Altura a aplicar (m):</label><input type="number" name="custom_alt" placeholder="Ex: 0.50"></div>
+                    <div class="campo"><label>Largura a aplicar (m):</label><input type="number" name="custom_larg" placeholder="Ex: 0.50"></div>
                     <p><b>Área calculada: <span class="area-total">0.00</span> m²</b></p>`;
             break;
         case 'parede_vol_custom':
@@ -262,10 +267,13 @@ function gerarCamposServico(servicoDiv, servicoKey) {
              html = `<p>O cálculo usará a área do teto informada para o cômodo.</p>`; 
              break;
         case 'cobertura': html = `<p>O cálculo usará a área do telhado informada.</p>`; break;
-        case 'cobertura_linear': html = `<div class="campo"><label>Comprimento (m):</label><input type="number" name="medida"></div>`; break;
+        case 'cobertura_linear':
+        case 'estrutural_linear': // NOVO
+            html = `<div class="campo"><label>Comprimento (m):</label><input type="number" name="medida"></div>`; break;
         case 'unitario_parede':
         case 'equipamento_geral':
         case 'unitario_teto':
+        case 'estrutural_unitario': // NOVO
             html = `<div class="campo"><label>Quantidade:</label><input type="number" name="quantidade" value="1" step="1"></div>`; break;
     }
     camposDiv.innerHTML = html;
@@ -298,12 +306,21 @@ function gerarRelatorio() {
 
         switch (servico.tipo) {
             case 'cobertura': quant = getVal('#areaTelhado', coberturaDiv); break;
-            case 'cobertura_linear': quant = getVal('[name=medida]', servicoDiv); break;
+            case 'cobertura_linear': 
+            case 'estrutural_linear': // NOVO
+                quant = getVal('[name=medida]', servicoDiv); 
+                break;
             case 'parede_area_custom':
                 const customCompArea = getVal('[name=custom_comp]', servicoDiv);
                 const customAltArea = getVal('[name=custom_alt]', servicoDiv);
                 quant = customCompArea * customAltArea;
                 detalhe = `(${customCompArea.toFixed(2)}m x ${customAltArea.toFixed(2)}m)`;
+                break;
+            case 'estrutural_area': // NOVO
+                const compEstrutural = getVal('[name=custom_comp]', servicoDiv);
+                const largEstrutural = getVal('[name=custom_larg]', servicoDiv);
+                quant = compEstrutural * largEstrutural;
+                detalhe = `(${compEstrutural.toFixed(2)}m x ${largEstrutural.toFixed(2)}m)`;
                 break;
             case 'parede_vol_custom':
                 const customCompVol = getVal('[name=custom_comp]', servicoDiv);
@@ -324,6 +341,7 @@ function gerarRelatorio() {
             case 'unitario_parede':
             case 'equipamento_geral':
             case 'unitario_teto':
+            case 'estrutural_unitario': // NOVO
                 quant = parseInt(getVal('[name=quantidade]', servicoDiv)) || 0; break;
         }
 
@@ -371,6 +389,23 @@ function gerarRelatorio() {
                 }
             });
         });
+        
+        // Loop para a nova seção Estrutural
+        let textoEstrutural = '\n◊ REPARO ESTRUTURAL:\n';
+        let temServicoEstrutural = false;
+        comodoDiv.querySelectorAll('.estrutural-container .servico-item').forEach(servicoDiv => {
+            const res = processarServico(servicoDiv);
+            if(res) {
+                temServicoEstrutural = true;
+                if (res.isIntervention) {
+                    const casasDecimais = res.unidade === 'm³' ? 3 : (res.unidade === 'un' ? 0 : 2);
+                    textoEstrutural += `  ▪ ${res.nome} = ${res.quant.toFixed(casasDecimais)} ${res.unidade} ${res.detalhe}\n`;
+                } else {
+                    textoEstrutural += `  ▪ ${res.nome}\n`;
+                }
+            }
+        });
+        if (temServicoEstrutural) texto += textoEstrutural;
 
         const processSubSection = (containerSelector, title, areaInfo) => {
             let subTexto = `\n◊ ${title} | Área: ${areaInfo.toFixed(2)} m²:\n`;
@@ -481,6 +516,10 @@ function handleAppActions(e) {
                     <div class="paredes-container"></div>
                     <button class="btn-add btn-add-small" data-action="add-parede">Adicionar Parede</button>
                     
+                    <h4>Reparo Estrutural</h4>
+                    <div class="estrutural-container servicos-container"></div>
+                    <button class="btn-add btn-add-small" data-action="add-servico-estrutural">Adicionar Serviço Estrutural</button>
+
                     <h4>Piso do Cômodo</h4>
                     <div class="campo"><label>Área do Piso (m²):</label><input type="number" class="comodo-area-piso" placeholder="Área exata do piso"></div>
                     <div class="piso-container servicos-container"></div>
@@ -529,6 +568,10 @@ function handleAppActions(e) {
         case 'add-servico-teto':
             container = target.closest('.bloco').querySelector('.teto-container');
             tipos = ['teto_custom', 'unitario_teto'];
+            break;
+        case 'add-servico-estrutural':
+            container = target.closest('.bloco').querySelector('.estrutural-container');
+            tipos = ['estrutural_area', 'estrutural_linear', 'estrutural_unitario'];
             break;
         case 'add-equipamento-geral':
             container = target.closest('.bloco').querySelector('.equipamentos-container');
@@ -600,12 +643,14 @@ function handleAppActions(e) {
 
                 switch (servico.tipo) {
                     case 'parede_area_custom':
-                        erroDeValidacao = checkInput('[name="custom_comp"]', 'Comprimento a aplicar') || checkInput('[name="custom_alt"]', 'Altura a aplicar');
+                    case 'estrutural_area':
+                        erroDeValidacao = checkInput('[name="custom_comp"]', 'Comprimento a aplicar') || checkInput('[name="custom_larg"]', 'Largura a aplicar');
                         break;
                     case 'parede_vol_custom':
                         erroDeValidacao = checkInput('[name="custom_comp"]', 'Comprimento a demolir') || checkInput('[name="custom_alt"]', 'Altura a demolir');
                         break;
                     case 'cobertura_linear':
+                    case 'estrutural_linear':
                         erroDeValidacao = checkInput('[name="medida"]', 'Comprimento');
                         break;
                     case 'cobertura':
@@ -679,6 +724,12 @@ document.addEventListener('input', (e) => {
     const target = e.target;
     const servicoDiv = target.closest('.servico-item');
     if(servicoDiv) {
+        if(target.matches('[name="custom_comp"], [name="custom_larg"]')) {
+            const comp = parseFloat(servicoDiv.querySelector('[name="custom_comp"]')?.value) || 0;
+            const larg = parseFloat(servicoDiv.querySelector('[name="custom_larg"]')?.value) || 0;
+            const totalSpan = servicoDiv.querySelector('.area-total');
+            if(totalSpan) totalSpan.textContent = (comp * larg).toFixed(2);
+        }
         if(target.matches('[name="custom_comp"], [name="custom_alt"]')) {
             const comp = parseFloat(servicoDiv.querySelector('[name="custom_comp"]')?.value) || 0;
             const alt = parseFloat(servicoDiv.querySelector('[name="custom_alt"]')?.value) || 0;
