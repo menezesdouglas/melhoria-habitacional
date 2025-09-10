@@ -79,10 +79,10 @@
     <h1>Ferramenta de Levantamento v20.3</h1>
     <div class="bloco">
         <h2>Dados do Beneficiário</h2>
-         <div class="collapsible-content">
-            <div class="campo"><label for="nomeBeneficiario">Nome Completo:</label><input type="text" id="nomeBeneficiario"></div>
-            <div class="campo"><label for="enderecoBeneficiario">Endereço:</label><input type="text" id="enderecoBeneficiario"></div>
-        </div>
+          <div class="collapsible-content">
+              <div class="campo"><label for="nomeBeneficiario">Nome Completo:</label><input type="text" id="nomeBeneficiario"></div>
+              <div class="campo"><label for="enderecoBeneficiario">Endereço:</label><input type="text" id="enderecoBeneficiario"></div>
+          </div>
     </div>
     <div class="bloco">
         <h2>Dados do Responsável Técnico</h2>
@@ -116,9 +116,14 @@
     <h2>Cômodos e Intervenções</h2>
     <div id="listaComodos"></div>
     <button id="addComodo" class="btn-add" data-action="add-comodo">Adicionar Cômodo</button>
+    
     <hr style="margin: 30px 0;">
+    
     <button id="gerarResumo" data-action="gerar-relatorio">Gerar Relatório de Texto</button>
     <button id="gerarPDF" class="btn-pdf" style="display:none;" data-action="gerar-pdf">Gerar PDF</button>
+    <button id="salvarRascunho" data-action="salvar-rascunho" style="background-color: #17a2b8;">Salvar Rascunho</button>
+    <button id="carregarRascunho" data-action="carregar-rascunho" style="background-color: #6c757d;">Carregar Rascunho</button>
+
     <div id="output" style="display:none; margin-top: 20px;">
         <h3>Relatório Final</h3>
         <div id="resumo-container">
@@ -255,16 +260,16 @@ function gerarCamposServico(servicoDiv, servicoKey) {
         case 'parede_area_custom':
         case 'estrutural_area':
             html = `<p>Informe as medidas exatas da área de aplicação:</p>
-                    <div class="campo"><label>Comprimento a aplicar (m):</label><input type="number" name="custom_comp" placeholder="Ex: 3.21"></div>
-                    <div class="campo"><label>Largura a aplicar (m):</label><input type="number" name="custom_larg" placeholder="Ex: 0.50"></div>
-                    <p><b>Área calculada: <span class="area-total">0.00</span> m²</b></p>`;
+                        <div class="campo"><label>Comprimento a aplicar (m):</label><input type="number" name="custom_comp" placeholder="Ex: 3.21"></div>
+                        <div class="campo"><label>Largura a aplicar (m):</label><input type="number" name="custom_larg" placeholder="Ex: 0.50"></div>
+                        <p><b>Área calculada: <span class="area-total">0.00</span> m²</b></p>`;
             break;
         case 'parede_vol_custom':
             html = `<p>Informe as medidas exatas da área a ser demolida:</p>
-                    <div class="campo"><label>Comprimento a demolir (m):</label><input type="number" name="custom_comp" placeholder="Ex: 0.80"></div>
-                    <div class="campo"><label>Altura a demolir (m):</label><input type="number" name="custom_alt" placeholder="Ex: 2.10"></div>
-                    <div class="campo"><label>Espessura (m):</label><input type="number" name="espessura" value="0.15"></div>
-                    <p><b>Volume de demolição: <span class="vol-total">0.000</span> m³</b></p>`;
+                        <div class="campo"><label>Comprimento a demolir (m):</label><input type="number" name="custom_comp" placeholder="Ex: 0.80"></div>
+                        <div class="campo"><label>Altura a demolir (m):</label><input type="number" name="custom_alt" placeholder="Ex: 2.10"></div>
+                        <div class="campo"><label>Espessura (m):</label><input type="number" name="espessura" value="0.15"></div>
+                        <p><b>Volume de demolição: <span class="vol-total">0.000</span> m³</b></p>`;
             break;
         case 'piso_custom': 
              html = `<p>O cálculo usará a área do piso informada para o cômodo.</p>`; 
@@ -520,8 +525,8 @@ function handleAppActions(e) {
                 <div class="collapsible-content">
                     <div class="campo"><label>Nome do Cômodo:</label><input type="text" class="comodo-nome" placeholder="Ex: Cozinha"></div>
                     <div class="grid-3-col">
-                         <div class="campo"><label>PD Máximo (m):</label><input type="number" class="comodo-pd-max" placeholder="Ex: 2.85"></div>
-                         <div class="campo"><label>PD Mínimo (m):</label><input type="number" class="comodo-pd-min" placeholder="Ex: 2.48"></div>
+                          <div class="campo"><label>PD Máximo (m):</label><input type="number" class="comodo-pd-max" placeholder="Ex: 2.85"></div>
+                          <div class="campo"><label>PD Mínimo (m):</label><input type="number" class="comodo-pd-min" placeholder="Ex: 2.48"></div>
                     </div>
                     
                     <h4>Paredes do Cômodo</h4>
@@ -603,6 +608,15 @@ function handleAppActions(e) {
             serviceContent.classList.toggle('hidden');
             target.textContent = serviceContent.classList.contains('hidden') ? 'Editar Serviço' : 'Fechar Serviço';
             return;
+        // Cases para salvar e carregar adicionados aqui
+        case 'salvar-rascunho':
+            salvarEstado();
+            return;
+        case 'carregar-rascunho':
+            if (confirm('Isso irá substituir todos os dados atuais. Deseja continuar?')) {
+                carregarEstado();
+            }
+            return;
         case 'gerar-relatorio':
             let erroDeValidacao = null;
             const todosOsServicos = document.querySelectorAll('.servico-item');
@@ -646,11 +660,11 @@ function handleAppActions(e) {
                 };
                 
                 const checkMainInput = (selector, fieldName, contextElement) => {
-                     const input = contextElement.querySelector(selector);
-                     if (input && (input.value === '' || input.value === null)) {
-                        return `ERRO: Preencha o campo "${fieldName}" em ${contexto} para calcular o serviço "${nomeServico}".`;
-                     }
-                     return null;
+                       const input = contextElement.querySelector(selector);
+                       if (input && (input.value === '' || input.value === null)) {
+                         return `ERRO: Preencha o campo "${fieldName}" em ${contexto} para calcular o serviço "${nomeServico}".`;
+                       }
+                       return null;
                 };
 
                 switch (servico.tipo) {
@@ -667,15 +681,15 @@ function handleAppActions(e) {
                         erroDeValidacao = checkInput('[name="medida"]', 'Comprimento');
                         break;
                     case 'cobertura':
-                         erroDeValidacao = checkMainInput('#areaTelhado', 'Área do Telhado', document.getElementById('bloco-cobertura'));
-                         break;
+                          erroDeValidacao = checkMainInput('#areaTelhado', 'Área do Telhado', document.getElementById('bloco-cobertura'));
+                          break;
                     case 'piso_custom':
                     case 'piso_vol_custom':
-                         erroDeValidacao = checkMainInput('.comodo-area-piso', 'Área do Piso', servicoDiv.closest('.bloco'));
-                         break;
+                          erroDeValidacao = checkMainInput('.comodo-area-piso', 'Área do Piso', servicoDiv.closest('.bloco'));
+                          break;
                     case 'teto_custom':
-                         erroDeValidacao = checkMainInput('.comodo-area-teto', 'Área do Teto', servicoDiv.closest('.bloco'));
-                         break;
+                          erroDeValidacao = checkMainInput('.comodo-area-teto', 'Área do Teto', servicoDiv.closest('.bloco'));
+                          break;
                 }
 
                 if (erroDeValidacao) {
@@ -687,15 +701,13 @@ function handleAppActions(e) {
                 alert(erroDeValidacao);
                 return;
             }
-
-            // A lógica de expandir tudo agora só acontece para o PDF.
+            
             const textoFinal = gerarRelatorio();
             document.getElementById('resumo').textContent = textoFinal;
             document.getElementById('output').style.display = 'block';
             document.getElementById('gerarPDF').style.display = 'inline-block';
             return;
         case 'gerar-pdf':
-            // Expande tudo antes de gerar o PDF.
             document.querySelectorAll('.collapsible-content, .service-collapsible-content').forEach(el => el.classList.remove('hidden'));
             document.querySelectorAll('[data-action="toggle-collapse"]').forEach(btn => btn.textContent = 'Concluir Seção');
             document.querySelectorAll('[data-action="toggle-service"]').forEach(btn => btn.textContent = 'Fechar Serviço');
@@ -796,6 +808,228 @@ document.addEventListener('change', (e) => {
 
 ['click', 'touchend'].forEach(evt => {
     document.addEventListener(evt, handleAppActions);
+});
+
+
+// ==========================================================
+//      NOVA LÓGICA PARA SALVAR E CARREGAR ESTADO
+// ==========================================================
+
+const CHAVE_STORAGE = 'levantamentoHabitacionalSalvo';
+
+/**
+ * Coleta todos os dados do formulário e retorna um objeto.
+ */
+function coletarEstadoAtual() {
+    const estado = {
+        beneficiario: document.getElementById('nomeBeneficiario').value,
+        endereco: document.getElementById('enderecoBeneficiario').value,
+        responsavel: document.getElementById('nomeResponsavel').value,
+        cobertura: {
+            area: document.getElementById('areaTelhado').value,
+            pdMax: document.getElementById('pdMaximo').value,
+            pdMin: document.getElementById('pdMinimo').value,
+            servicos: []
+        },
+        comodos: []
+    };
+
+    // Coletar serviços da cobertura
+    document.querySelectorAll('#bloco-cobertura .servico-item').forEach(servicoDiv => {
+        const select = servicoDiv.querySelector('select');
+        if (!select || !select.value) return;
+        const campos = {};
+        servicoDiv.querySelectorAll('.campos-especificos input').forEach(input => {
+            campos[input.name] = input.value;
+        });
+        estado.cobertura.servicos.push({
+            id: select.value,
+            campos: campos
+        });
+    });
+
+    // Coletar dados dos cômodos
+    document.querySelectorAll('#listaComodos > .bloco').forEach(comodoDiv => {
+        const comodoObj = {
+            nome: comodoDiv.querySelector('.comodo-nome').value,
+            pdMax: comodoDiv.querySelector('.comodo-pd-max').value,
+            pdMin: comodoDiv.querySelector('.comodo-pd-min').value,
+            areaPiso: comodoDiv.querySelector('.comodo-area-piso').value,
+            areaTeto: comodoDiv.querySelector('.comodo-area-teto').value,
+            paredes: [],
+            pisoServicos: [],
+            tetoServicos: [],
+            estruturalServicos: [],
+            equipamentos: []
+        };
+        
+        // Paredes e seus serviços
+        comodoDiv.querySelectorAll('.parede-bloco').forEach(paredeDiv => {
+            const paredeObj = {
+                comprimento: paredeDiv.querySelector('.parede-comprimento').value,
+                servicos: []
+            };
+            paredeDiv.querySelectorAll('.servico-item').forEach(servicoDiv => {
+                const select = servicoDiv.querySelector('select');
+                if (!select || !select.value) return;
+                const campos = {};
+                servicoDiv.querySelectorAll('.campos-especificos input').forEach(input => {
+                    campos[input.name] = input.value;
+                });
+                paredeObj.servicos.push({ id: select.value, campos: campos });
+            });
+            comodoObj.paredes.push(paredeObj);
+        });
+        
+        // Função auxiliar para coletar serviços de outras seções
+        const coletarServicosSecao = (containerSelector, targetArray) => {
+             comodoDiv.querySelectorAll(`${containerSelector} .servico-item`).forEach(servicoDiv => {
+                const select = servicoDiv.querySelector('select');
+                if (!select || !select.value) return;
+                const campos = {};
+                servicoDiv.querySelectorAll('.campos-especificos input').forEach(input => {
+                    campos[input.name] = input.value;
+                });
+                targetArray.push({ id: select.value, campos: campos });
+            });
+        };
+        
+        coletarServicosSecao('.piso-container', comodoObj.pisoServicos);
+        coletarServicosSecao('.teto-container', comodoObj.tetoServicos);
+        coletarServicosSecao('.estrutural-container', comodoObj.estruturalServicos);
+        coletarServicosSecao('.equipamentos-container', comodoObj.equipamentos);
+
+        estado.comodos.push(comodoObj);
+    });
+
+    return estado;
+}
+
+
+/**
+ * Salva o estado atual do formulário no localStorage.
+ */
+function salvarEstado() {
+    try {
+        const estadoAtual = coletarEstadoAtual();
+        localStorage.setItem(CHAVE_STORAGE, JSON.stringify(estadoAtual));
+        alert('Rascunho salvo com sucesso!');
+    } catch (error) {
+        console.error("Erro ao salvar o estado:", error);
+        alert('Ocorreu um erro ao tentar salvar. Verifique o console para mais detalhes.');
+    }
+}
+
+
+/**
+ * Carrega um estado salvo e reconstrói o formulário.
+ */
+function carregarEstado() {
+    const estadoSalvo = localStorage.getItem(CHAVE_STORAGE);
+    if (!estadoSalvo) {
+        alert('Nenhum rascunho encontrado.');
+        return;
+    }
+
+    try {
+        const estado = JSON.parse(estadoSalvo);
+        
+        // Limpa o formulário atual
+        document.getElementById('listaComodos').innerHTML = '';
+        document.querySelector('#bloco-cobertura .servicos-container').innerHTML = '';
+
+        // Preenche dados básicos
+        document.getElementById('nomeBeneficiario').value = estado.beneficiario || '';
+        document.getElementById('enderecoBeneficiario').value = estado.endereco || '';
+        document.getElementById('nomeResponsavel').value = estado.responsavel || '';
+        document.getElementById('areaTelhado').value = estado.cobertura.area || '';
+        document.getElementById('pdMaximo').value = estado.cobertura.pdMax || '';
+        document.getElementById('pdMinimo').value = estado.cobertura.pdMin || '';
+        
+        // Recria os serviços da cobertura
+        const coberturaContainer = document.querySelector('#bloco-cobertura .servicos-container');
+        estado.cobertura.servicos.forEach(servicoData => {
+            document.querySelector('[data-action="add-servico-cobertura"]').click();
+            const novoServicoDiv = coberturaContainer.lastElementChild;
+            const select = novoServicoDiv.querySelector('select');
+            select.value = servicoData.id;
+            select.dispatchEvent(new Event('change')); // Dispara o evento para criar os campos
+            for(const nomeCampo in servicoData.campos) {
+                const input = novoServicoDiv.querySelector(`[name="${nomeCampo}"]`);
+                if(input) input.value = servicoData.campos[nomeCampo];
+            }
+        });
+
+        // Recria os cômodos
+        estado.comodos.forEach(comodoData => {
+            document.getElementById('addComodo').click();
+            const novoComodoDiv = document.getElementById('listaComodos').lastElementChild;
+            
+            // Preenche dados do cômodo
+            novoComodoDiv.querySelector('.comodo-nome').value = comodoData.nome;
+            novoComodoDiv.querySelector('.comodo-pd-max').value = comodoData.pdMax;
+            novoComodoDiv.querySelector('.comodo-pd-min').value = comodoData.pdMin;
+            novoComodoDiv.querySelector('.comodo-area-piso').value = comodoData.areaPiso;
+            novoComodoDiv.querySelector('.comodo-area-teto').value = comodoData.areaTeto;
+
+            // Recria as paredes
+            comodoData.paredes.forEach(paredeData => {
+                novoComodoDiv.querySelector('[data-action="add-parede"]').click();
+                const novaParedeDiv = novoComodoDiv.querySelector('.paredes-container').lastElementChild;
+                novaParedeDiv.querySelector('.parede-comprimento').value = paredeData.comprimento;
+                
+                // Recria serviços da parede
+                paredeData.servicos.forEach(servicoData => {
+                    novaParedeDiv.querySelector('[data-action="add-servico-parede"]').click();
+                    const novoServicoDiv = novaParedeDiv.querySelector('.servicos-container').lastElementChild;
+                    const select = novoServicoDiv.querySelector('select');
+                    select.value = servicoData.id;
+                    select.dispatchEvent(new Event('change'));
+                    for(const nomeCampo in servicoData.campos) {
+                        const input = novoServicoDiv.querySelector(`[name="${nomeCampo}"]`);
+                        if(input) input.value = servicoData.campos[nomeCampo];
+                    }
+                });
+            });
+            
+            // Função auxiliar para recriar serviços de outras seções
+            const recriarServicosSecao = (action, containerSelector, servicosArray) => {
+                 servicosArray.forEach(servicoData => {
+                    novoComodoDiv.querySelector(`[data-action="${action}"]`).click();
+                    const container = novoComodoDiv.querySelector(containerSelector);
+                    const novoServicoDiv = container.lastElementChild;
+                    const select = novoServicoDiv.querySelector('select');
+                    select.value = servicoData.id;
+                    select.dispatchEvent(new Event('change'));
+                    for (const nomeCampo in servicoData.campos) {
+                        const input = novoServicoDiv.querySelector(`[name="${nomeCampo}"]`);
+                        if (input) input.value = servicoData.campos[nomeCampo];
+                    }
+                });
+            };
+
+            recriarServicosSecao('add-servico-piso', '.piso-container', comodoData.pisoServicos);
+            recriarServicosSecao('add-servico-teto', '.teto-container', comodoData.tetoServicos);
+            recriarServicosSecao('add-servico-estrutural', '.estrutural-container', comodoData.estruturalServicos);
+            recriarServicosSecao('add-equipamento-geral', '.equipamentos-container', comodoData.equipamentos);
+        });
+
+        alert('Rascunho carregado com sucesso!');
+
+    } catch (error) {
+        console.error("Erro ao carregar o estado:", error);
+        alert('Ocorreu um erro ao carregar o rascunho. Pode ser que o rascunho salvo seja de uma versão antiga da ferramenta. Verifique o console.');
+        localStorage.removeItem(CHAVE_STORAGE); // Limpa o rascunho corrompido
+    }
+}
+
+// Verifica se existe um rascunho ao carregar a página
+document.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem(CHAVE_STORAGE)) {
+        if (confirm('Encontramos um rascunho salvo. Deseja carregá-lo?')) {
+            carregarEstado();
+        }
+    }
 });
 </script>
 </body>
