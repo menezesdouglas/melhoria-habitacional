@@ -386,29 +386,46 @@ function gerarRelatorio() {
                 textoEstrutural += res.isIntervention ? `  ▪ ${res.nome} = ${res.quant.toFixed(casasDecimais)} ${res.unidade} ${res.detalhe}\n` : `  ▪ ${res.nome}\n`;
             }
         });
-        const comentariosEstruturais = processarComentarios(comodoDiv.querySelector('.estrutural-container'));
+        const comentariosEstruturais = processarComentarios(comodoDiv.querySelector('.estrutural-container').nextElementSibling);
         if (comentariosEstruturais) {
             if (!temServicoEstrutural) textoEstrutural += '\n◊ REPARO ESTRUTURAL:\n';
             textoEstrutural += comentariosEstruturais;
         }
         if (textoEstrutural) texto += textoEstrutural;
 
-        // Subseções (Piso, Teto, Equipamentos)
+        // ----- INÍCIO DA CORREÇÃO E REATORAÇÃO -----
+
+        // Função auxiliar para processar subseções como Piso, Teto e Equipamentos
         const processSubSection = (containerSelector, title, areaInfo) => {
             let subTexto = '';
             let hasContent = false;
-            comodoDiv.querySelectorAll(`${containerSelector} .servico-item`).forEach(servicoDiv => {
+            const servicesContainer = comodoDiv.querySelector(containerSelector);
+            if (!servicesContainer) return ''; 
+
+            servicesContainer.querySelectorAll('.servico-item').forEach(servicoDiv => {
                 const res = processarServico(servicoDiv);
                 if (res) {
-                    if (!hasContent) subTexto += `\n◊ ${title} | Área: ${areaInfo.toFixed(2)} m²:\n`;
+                    if (!hasContent) {
+                        const areaText = (areaInfo !== null && areaInfo > 0) ? ` | Área: ${areaInfo.toFixed(2)} m²` : '';
+                        subTexto += `\n◊ ${title}${areaText}:\n`;
+                    }
                     hasContent = true;
                     const casasDecimais = res.unidade === 'm³' ? 3 : (res.unidade === 'un' ? 0 : 2);
                     subTexto += res.isIntervention ? `  ▪ ${res.nome} = ${res.quant.toFixed(casasDecimais)} ${res.unidade} ${res.detalhe}\n` : `  ▪ ${res.nome}\n`;
                 }
             });
-            const comentarios = processarComentarios(comodoDiv.querySelector(containerSelector));
+
+            // CORREÇÃO: Busca o container de comentários como o próximo "irmão" do container de serviços.
+            const commentsContainer = servicesContainer.nextElementSibling;
+            const comentarios = (commentsContainer && commentsContainer.classList.contains('comentarios-container')) 
+                ? processarComentarios(commentsContainer) 
+                : '';
+
             if (comentarios) {
-                if (!hasContent) subTexto += `\n◊ ${title} | Área: ${areaInfo.toFixed(2)} m²:\n`;
+                if (!hasContent) {
+                    const areaText = (areaInfo !== null && areaInfo > 0) ? ` | Área: ${areaInfo.toFixed(2)} m²` : '';
+                    subTexto += `\n◊ ${title}${areaText}:\n`;
+                }
                 subTexto += comentarios;
             }
             return subTexto;
@@ -416,28 +433,12 @@ function gerarRelatorio() {
 
         const areaPiso = parseFloat(comodoDiv.querySelector('.comodo-area-piso').value) || 0;
         const areaTeto = parseFloat(comodoDiv.querySelector('.comodo-area-teto').value) || 0;
+        
         texto += processSubSection('.piso-container', 'PISO', areaPiso);
         texto += processSubSection('.teto-container', 'TETO', areaTeto);
+        texto += processSubSection('.equipamentos-container', 'EQUIPAMENTOS GERAIS', null);
 
-        // Equipamentos Gerais
-        let textoServicosGerais = '';
-        let temServicosGerais = false;
-        comodoDiv.querySelectorAll('.equipamentos-container .servico-item').forEach(servicoDiv => {
-            const res = processarServico(servicoDiv);
-            if (res) {
-                if (!temServicosGerais) {
-                    textoServicosGerais += '\n◊ EQUIPAMENTOS GERAIS:\n';
-                    temServicosGerais = true;
-                }
-                textoServicosGerais += res.isIntervention ? `  ▪ ${res.nome} = ${res.quant.toFixed(0)} ${res.unidade} ${res.detalhe}\n` : `  ▪ ${res.nome}\n`;
-            }
-        });
-        const comentariosEquipamentos = processarComentarios(comodoDiv.querySelector('.equipamentos-container'));
-        if (comentariosEquipamentos) {
-            if (!temServicosGerais) textoServicosGerais += '\n◊ EQUIPAMENTOS GERAIS:\n';
-            textoServicosGerais += comentariosEquipamentos;
-        }
-        if (textoServicosGerais) texto += textoServicosGerais;
+        // ----- FIM DA CORREÇÃO E REATORAÇÃO -----
     });
 
     texto += `\n\n========================================\nQUANTITATIVOS TOTAIS PARA ORÇAMENTO\n========================================\n`;
@@ -449,6 +450,7 @@ function gerarRelatorio() {
 
     return texto;
 }
+
 
 async function gerarPDF() {
     try {
