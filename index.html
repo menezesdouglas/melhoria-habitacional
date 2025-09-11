@@ -1,11 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Levantamento Habitacional v20.3</title>
-
+    <title>Levantamento Habitacional v20.4</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -15,20 +13,21 @@
         h4 { margin-top: 30px; }
         h3, h5 { display: flex; justify-content: space-between; align-items: center; }
         .bloco { border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 25px; background-color: #fff; }
-        .parede-bloco, .piso-bloco { border: 1px solid #ced4da; border-radius: 5px; padding: 15px; margin-top: 15px; background-color: #f8f9fa; }
+        .parede-bloco, .piso-bloco, .comentario-bloco { border: 1px solid #ced4da; border-radius: 5px; padding: 15px; margin-top: 15px; background-color: #f8f9fa; }
         .campo { margin-bottom: 15px; }
         label { display: block; font-weight: 600; margin-bottom: 5px; color: #495057; }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        textarea { min-height: 80px; }
         button { background-color: #0056b3; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 10px; transition: background-color 0.2s; }
         button:hover { background-color: #004494; }
         .btn-add { background-color: #28a745; }
         .btn-add:hover { background-color: #218838; }
         .btn-pdf { background-color: #c82333; }
         .btn-pdf:hover { background-color: #a21b29; }
-        .btn-toggle, .btn-toggle-service { background-color: #ffc107; color: black; font-size: 14px; padding: 8px 12px; }
-        .btn-toggle:hover, .btn-toggle-service:hover { background-color: #e0a800; }
+        .btn-toggle, .btn-toggle-service, .btn-finalizar { background-color: #ffc107; color: black; font-size: 14px; padding: 8px 12px; }
+        .btn-toggle:hover, .btn-toggle-service:hover, .btn-finalizar:hover { background-color: #e0a800; }
         .btn-add-small { font-size: 14px; padding: 8px 12px; margin-top: 5px; }
-        
+        .botoes-acoes { display: flex; gap: 10px; flex-wrap: wrap; }
         .btn-remove {
             background: transparent;
             border: none;
@@ -44,21 +43,13 @@
             border-radius: 50%;
             transition: background-color 0.2s, color 0.2s;
         }
-        .btn-remove svg {
-            width: 18px;
-            height: 18px;
-        }
-        .btn-remove:hover {
-            color: #dc3545;
-            background-color: #f1f1f1;
-        }
-        
+        .btn-remove svg { width: 18px; height: 18px; }
+        .btn-remove:hover { color: #dc3545; background-color: #f1f1f1; }
         #resumo-container { background-color: #e9ecef; border-left: 5px solid #0056b3; margin-top: 20px; padding: 20px; border-radius: 5px; font-family: "SFMono-Regular", Menlo, Monaco, Consolas, monospace; font-size: 14px; }
         #resumo { white-space: pre-wrap; word-wrap: break-word; }
         .grid-3-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
         .hidden { display: none; }
         .servico-item { padding: 15px; border: 1px solid #e9ecef; border-radius: 4px; margin-top: 10px; }
-        
         .service-header {
             display: flex;
             justify-content: space-between;
@@ -68,19 +59,18 @@
         }
         .service-header strong { font-size: 1.1em; flex-grow: 1; }
         .header-buttons { display: flex; align-items: center; flex-shrink: 0; }
-
+        .comment-text { margin: 5px 0; font-style: italic; color: #495057; }
         footer { text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid #dee2e6; font-size: 14px; color: #6c757d; }
         footer a { color: #0056b3; text-decoration: none; font-weight: 600; }
         footer a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-
 <div class="container">
-    <h1>Ferramenta de Levantamento v20.3</h1>
+    <h1>Ferramenta de Levantamento v20.4</h1>
     <div class="bloco">
         <h2>Dados do Beneficiário</h2>
-         <div class="collapsible-content">
+        <div class="collapsible-content">
             <div class="campo"><label for="nomeBeneficiario">Nome Completo:</label><input type="text" id="nomeBeneficiario"></div>
             <div class="campo"><label for="enderecoBeneficiario">Endereço:</label><input type="text" id="enderecoBeneficiario"></div>
         </div>
@@ -98,28 +88,32 @@
             <div class="grid-3-col">
                 <div class="campo">
                     <label for="areaTelhado">Área do Telhado (m²):</label>
-                    <input type="number" id="areaTelhado" placeholder="Ex: 55.5">
+                    <input type="number" id="areaTelhado" placeholder="Ex: 55.5" min="0" step="0.01">
                 </div>
                 <div class="campo">
                     <label for="pdMaximo">PD Máximo (m):</label>
-                    <input type="number" id="pdMaximo" placeholder="Ex: 2.80">
+                    <input type="number" id="pdMaximo" placeholder="Ex: 2.80" min="0" step="0.01">
                 </div>
                 <div class="campo">
                     <label for="pdMinimo">PD Mínimo (m):</label>
-                    <input type="number" id="pdMinimo" placeholder="Ex: 2.50">
+                    <input type="number" id="pdMinimo" placeholder="Ex: 2.50" min="0" step="0.01">
                 </div>
             </div>
             <div class="servicos-container"></div>
-            <button class="btn-add btn-add-small" data-action="add-servico-cobertura">Adicionar Serviço à Cobertura</button>
+            <div class="comentarios-container"></div>
+            <div class="botoes-acoes">
+                <button class="btn-add btn-add-small" data-action="add-servico-cobertura" aria-label="Adicionar serviço à cobertura">Adicionar Serviço à Cobertura</button>
+                <button class="btn-add-small" data-action="add-comentario" aria-label="Adicionar comentário">Adicionar Comentário</button>
+            </div>
         </div>
-        <button class="btn-toggle" data-action="toggle-collapse">Concluir Seção</button>
+        <button class="btn-toggle" data-action="toggle-collapse" aria-label="Concluir ou editar seção de cobertura">Concluir Seção</button>
     </div>
     <h2>Cômodos e Intervenções</h2>
     <div id="listaComodos"></div>
-    <button id="addComodo" class="btn-add" data-action="add-comodo">Adicionar Cômodo</button>
+    <button id="addComodo" class="btn-add" data-action="add-comodo" aria-label="Adicionar novo cômodo">Adicionar Cômodo</button>
     <hr style="margin: 30px 0;">
-    <button id="gerarResumo" data-action="gerar-relatorio">Gerar Relatório de Texto</button>
-    <button id="gerarPDF" class="btn-pdf" style="display:none;" data-action="gerar-pdf">Gerar PDF</button>
+    <button id="gerarResumo" data-action="gerar-relatorio" aria-label="Gerar relatório de texto">Gerar Relatório de Texto</button>
+    <button id="gerarPDF" class="btn-pdf" style="display:none;" data-action="gerar-pdf" aria-label="Gerar PDF do relatório">Gerar PDF</button>
     <div id="output" style="display:none; margin-top: 20px;">
         <h3>Relatório Final</h3>
         <div id="resumo-container">
@@ -127,21 +121,19 @@
         </div>
     </div>
     <footer>
-        Desenvolvido por 
-        <a href="https://github.com/menezesdouglas" target="_blank" rel="noopener noreferrer">Douglas Menezes</a> 
-        & 
+        Desenvolvido por
+        <a href="https://github.com/menezesdouglas" target="_blank" rel="noopener noreferrer">Douglas Menezes</a>
+        &
         <a href="https://github.com/vitoriamignon" target="_blank" rel="noopener noreferrer">Vitoria Mignon</a>
     </footer>
 </div>
 
 <script>
 const REMOVE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>`;
-
 window.jsPDF = window.jspdf.jsPDF;
 let nextId = 0;
 
 const SERVICOS_DB = {
-    // ===== COBERTURA =====
     "estrutura_madeira_cobertura": { nome: "Estrutura em madeira para cobertura", unidade: "m²", tipo: "cobertura" },
     "remocao_telha_francesa_ex_madeiramento": { nome: "Remoção de cobertura em telhas francesas (exclusivo madeiramento)", unidade: "m²", tipo: "cobertura" },
     "remocao_telha_francesa_inclusive": { nome: "Remoção de cobertura em telhas francesas (inclusive)", unidade: "m²", tipo: "cobertura" },
@@ -163,11 +155,9 @@ const SERVICOS_DB = {
     "ripa_madeira_1_5x4cm": { nome: "Ripa de madeira serrada 1,5x4cm", unidade: "m", tipo: "cobertura_linear" },
     "terca_madeira_3x3": { nome: "Terça de madeira serrada 3\"x3\"", unidade: "m", tipo: "cobertura_linear" },
     "terca_madeira_aparelhada_3x4_5": { nome: "Terça de madeira aparelhada 3\"x4.1/2\"", unidade: "m", tipo: "cobertura_linear" },
-
-    // ===== SERVIÇOS DE PAREDE =====
-    "remocao_revestimento_parede": { nome: "Remoção de revestimento de parede", unidade: "m²", tipo: "parede_area_custom" },
+    "remocao_revestimento_parede": { nome: "Remoção de revestimento de paredes", unidade: "m²", tipo: "parede_area_custom" },
     "alvenaria_vedacao": { nome: "Alvenaria de vedação", unidade: "m²", tipo: "parede_area_custom" },
-    "corte_impermeabilizacao": { nome: "Corte e impermeabilização de parede", unidade: "m²", tipo: "parede_area_custom" },
+    "corte_impermeabilizacao": { nome: "Corte e impermeabilização de paredes", unidade: "m²", tipo: "parede_area_custom" },
     "embozo_parede": { nome: "Emboço paulista em paredes", unidade: "m²", tipo: "parede_area_custom" },
     "revestimento_ceramico_parede": { nome: "Revestimento cerâmico em paredes", unidade: "m²", tipo: "parede_area_custom" },
     "pintura_pva": { nome: "Preparo e pintura com tinta PVA látex", unidade: "m²", tipo: "parede_area_custom" },
@@ -182,25 +172,21 @@ const SERVICOS_DB = {
     "ponto_tomada": { nome: "Ponto de tomada", unidade: "un", tipo: "unitario_parede" },
     "vaso_sanitario_parede": { nome: "Vaso sanitário com caixa acoplada", unidade: "un", tipo: "unitario_parede" },
     "tanque_louca_parede": { nome: "Tanque de louça", unidade: "un", tipo: "unitario_parede" },
-
-    // ===== SERVIÇOS DE PISO (ATUALIZADO) =====
-    "enchimento_piso_concreto": { nome: "ENCHIMENTO DE PISO COM ESCOMBRO DAS PROPRIAS EDIFICACOES, ATE UMA ALTURA MAXIMA DE 80CM", unidade: "M3", tipo: "piso_vol_custom" },
-    "demolicao_piso_ladrilho": { nome: "DEMOLICAO DE PISO DE LADRILHO COM RESPECTIVA CAMADA DE ARGAMASSA DE ASSENTAMENTO", unidade: "M2", tipo: "piso_custom" },
-    "demolicao_manual_piso_cimentado": { nome: "DEMOLICAO MANUAL DE PISO CIMENTADO E DA RESPECTIVA BASE DE CONCRETO", unidade: "M2", tipo: "piso_custom" },
-    "piso_cimentado_1_5cm": { nome: "PISO CIMENTADO,COM 1,5CM DE ESPESSURA,COM ARGAMASSA DE CIMENTO E AREIA,NO TRACO 1:3", unidade: "M2", tipo: "piso_custom" },
-    "contrapiso_regularizadora_1_5cm": { nome: "CONTRAPISO,BASE OU CAMADA REGULARIZADORA,EXECUTADA COM ARGAMASSA DE CIMENTO A AREIA,NO TRACO 1:4,NA ESPESSURA DE 1,5CM", unidade: "M2", tipo: "piso_custom" },
-    "contrapiso_regularizadora_5cm": { nome: "CONTRAPISO,BASE OU CAMADA REGULARIZADORA,EXECUTADA COM ARGAMASSA DE CIMENTO E AREIA,NO TRACO 1:4,NA ESPESSURA DE 5CM", unidade: "M2", tipo: "piso_custom" },
-    "revestimento_ceramico_antiderrapante_45x45": { nome: "REVESTIMENTO DE PISO COM LADRILHO CERAMICO,ANTIDERRAPANTE,MEDIDAS EM TORNO DE (45x45)CM", unidade: "M2", tipo: "piso_custom" },
-    "soleira_granito_cinza_andorinha_2cm_15_18cm": { nome: "SOLEIRA EM GRANITO CINZA ANDORINHA,ESPESSURA DE 2CM, LARGURA15 A 18CM", unidade: "M", tipo: "piso_linear" },
-    "soleira_granito_cinza_andorinha_2cm_20_22cm": { nome: "SOLEIRA EM GRANITO CINZA ANDORINHA,ESPESSURA DE 2CM,COM 2 POLIMENTOS, LARGURA DE 20-22CM", unidade: "M", tipo: "piso_linear" },
-    "pedra_box_banheiro_granito_tento_5cm": { nome: "PEDRA PARA BOX DE BANHEIRO EM GRANITO (TENTO), SEM REBAIXO, COM 5CM DE ALTURA", unidade: "M", tipo: "piso_linear" },
-    "rodape_ladrilho_ceramico_7_10cm": { nome: "RODAPE COM LADRILHO CERAMICO,COM 7,5 A 10CM DE ALTURA", unidade: "M", tipo: "piso_linear" },
-    "peitoril_granito_cinza_andorinha_2cm_15_18cm": { nome: "PEITORIL EM GRANITO CINZA ANDORINHA,ESPESSURA DE 2CM,LARGURA15 A 18CM", unidade: "M", tipo: "piso_linear" },
-    "soleira_granito_cinza_andorinha_2cm_15_20cm": { nome: "SOLEIRA EM GRANITO CINZA ANDORINHA,ESPESSURA DE 2CM,COM 2 POLIMENTOS, LARGURA DE 15-20CM", unidade: "M", tipo: "piso_linear" },
-    "pedra_box_banheiro_granito_tento_reto_5cm": { nome: "PEDRA PARA BOX DE BANHEIRO EM GRANITO (TENTO), SEM REBAIXO, COM 5CM DE ALTURA, ASSENTE COMO EM 13.045.0040", unidade: "M", tipo: "piso_linear" },
-    "aterramento_completo": { nome: "ATERRAMENTO COMPOSTO POR 1 CAIXA 25X25CM, 1 HASTE DE COBRE 5/8\", 1 CONECTOR, 6M DE CABO", unidade: "UN", tipo: "piso_unitario" },
-
-    // ===== SERVIÇOS DE TETO =====
+    "enchimento_piso_concreto": { nome: "ENCHIMENTO DE PISO COM ESCOMBRO DAS PROPRIAS EDIFICACOES, ATE UMA ALTURA MAXIMA DE 80CM", unidade: "m³", tipo: "piso_vol_custom" },
+    "demolicao_piso_ladrilho": { nome: "DEMOLICAO DE PISO DE LADRILHO COM RESPECTIVA CAMADA DE ARGAMASSA DE ASSENTAMENTO", unidade: "m²", tipo: "piso_custom" },
+    "demolicao_manual_piso_cimentado": { nome: "DEMOLICAO MANUAL DE PISO CIMENTADO E DA RESPECTIVA BASE DE CONCRETO", unidade: "m²", tipo: "piso_custom" },
+    "piso_cimentado_1_5cm": { nome: "PISO CIMENTADO,COM 1,5CM DE ESPESSURA,COM ARGAMASSA DE CIMENTO E AREIA,NO TRACO 1:3", unidade: "m²", tipo: "piso_custom" },
+    "contrapiso_regularizadora_1_5cm": { nome: "CONTRAPISO,BASE OU CAMADA REGULARIZADORA,EXECUTADA COM ARGAMASSA DE CIMENTO A AREIA,NO TRACO 1:4,NA ESPESSURA DE 1,5CM", unidade: "m²", tipo: "piso_custom" },
+    "contrapiso_regularizadora_5cm": { nome: "CONTRAPISO,BASE OU CAMADA REGULARIZADORA,EXECUTADA COM ARGAMASSA DE CIMENTO E AREIA,NO TRACO 1:4,NA ESPESSURA DE 5CM", unidade: "m²", tipo: "piso_custom" },
+    "revestimento_ceramico_antiderrapante_45x45": { nome: "REVESTIMENTO DE PISO COM LADRILHO CERAMICO,ANTIDERRAPANTE,MEDIDAS EM TORNO DE (45x45)CM", unidade: "m²", tipo: "piso_custom" },
+    "soleira_granito_cinza_andorinha_2cm_15_18cm": { nome: "SOLEIRA EM GRANITO CINZA ANDORINHA,ESPESSURA DE 2CM, LARGURA 15 A 18CM", unidade: "m", tipo: "piso_linear" },
+    "soleira_granito_cinza_andorinha_2cm_20_22cm": { nome: "SOLEIRA EM GRANITO CINZA ANDORINHA,ESPESSURA DE 2CM,COM 2 POLIMENTOS, LARGURA DE 20-22CM", unidade: "m", tipo: "piso_linear" },
+    "pedra_box_banheiro_granito_tento_5cm": { nome: "PEDRA PARA BOX DE BANHEIRO EM GRANITO (TENTO), SEM REBAIXO, COM 5CM DE ALTURA", unidade: "m", tipo: "piso_linear" },
+    "rodape_ladrilho_ceramico_7_10cm": { nome: "RODAPE COM LADRILHO CERAMICO,COM 7,5 A 10CM DE ALTURA", unidade: "m", tipo: "piso_linear" },
+    "peitoril_granito_cinza_andorinha_2cm_15_18cm": { nome: "PEITORIL EM GRANITO CINZA ANDORINHA,ESPESSURA DE 2CM,LARGURA 15 A 18CM", unidade: "m", tipo: "piso_linear" },
+    "soleira_granito_cinza_andorinha_2cm_15_20cm": { nome: "SOLEIRA EM GRANITO CINZA ANDORINHA,ESPESSURA DE 2CM,COM 2 POLIMENTOS, LARGURA DE 15-20CM", unidade: "m", tipo: "piso_linear" },
+    "pedra_box_banheiro_granito_tento_reto_5cm": { nome: "PEDRA PARA BOX DE BANHEIRO EM GRANITO (TENTO), SEM REBAIXO, COM 5CM DE ALTURA, ASSENTE COMO EM 13.045.0040", unidade: "m", tipo: "piso_linear" },
+    "aterramento_completo": { nome: "ATERRAMENTO COMPOSTO POR 1 CAIXA 25X25CM, 1 HASTE DE COBRE 5/8\", 1 CONECTOR, 6M DE CABO", unidade: "un", tipo: "piso_unitario" },
     "remocao_forro_estuque_gesso": { nome: "Remoção de forro de estuque, gesso, placas prensadas", unidade: "m²", tipo: "teto_custom" },
     "remocao_forro_lambri_madeira_pvc": { nome: "Remoção de forro ou lambri de madeira ou PVC", unidade: "m²", tipo: "teto_custom" },
     "forro_pvc_reguas_200mm": { nome: "Forro de PVC em réguas de 200mm (inclusive estrutura)", unidade: "m²", tipo: "teto_custom" },
@@ -209,23 +195,16 @@ const SERVICOS_DB = {
     "instalacao_conjunto_3pontos_luz": { nome: "Instalação de conjunto de 3 pontos de luz (equiv. 6 varas)", unidade: "un", tipo: "unitario_teto" },
     "lampada_led_bulbo_a60": { nome: "Lâmpada LED, bulbo, A60, 8W", unidade: "un", tipo: "unitario_teto" },
     "globo_esferico_plafonier": { nome: "Globo esférico 10x15cm e plafonier em alumínio", unidade: "un", tipo: "unitario_teto" },
-    
-    // ===== REPARO ESTRUTURAL =====
     "reparacao_estrutural_geral": { nome: "Reparação estrutural (remoção, limpeza, tratamento, recomposição)", unidade: "m²", tipo: "estrutural_area" },
     "concreto_baldrames_15x40": { nome: "Formas, armaduras e concreto para baldrames 15x40cm", unidade: "m", tipo: "estrutural_linear" },
     "concreto_sapata_60x60x30": { nome: "Formas, armaduras e concreto para sapata 60x60x30cm", unidade: "un", tipo: "estrutural_unitario" },
     "concreto_laje_h12": { nome: "Formas, armaduras e concreto para laje h=12cm", unidade: "m²", tipo: "estrutural_area" },
     "concreto_pilares_vigas_cintas_15x30": { nome: "Formas, armaduras e concreto para pilares/vigas/cintas 15x30cm", unidade: "m", tipo: "estrutural_linear" },
-
-    // ===== EQUIPAMENTOS GERAIS =====
     "caixa_agua_1000l": { nome: "Caixa d'água de polietileno 1000L", unidade: "un", tipo: "equipamento_geral" },
 };
 
 function popularSelectServicos(selectElement, tiposFiltro) {
-    selectElement.innerHTML = `
-        <option value="">-- Escolha um serviço --</option>
-        <option value="sem_intervencao">Sem intervenção</option>
-    `;
+    selectElement.innerHTML = `<option value="">-- Escolha um serviço --</option><option value="sem_intervencao">Sem intervenção</option>`;
     tiposFiltro.forEach(tipo => {
         const optgroup = document.createElement('optgroup');
         optgroup.label = tipo.replace(/_/g, ' ').toUpperCase();
@@ -243,50 +222,36 @@ function popularSelectServicos(selectElement, tiposFiltro) {
 
 function gerarCamposServico(servicoDiv, servicoKey) {
     const camposDiv = servicoDiv.querySelector('.campos-especificos');
-    if (!servicoKey || servicoKey === 'sem_intervencao') { 
-        camposDiv.innerHTML = ''; 
-        return; 
+    if (!servicoKey || servicoKey === 'sem_intervencao') {
+        camposDiv.innerHTML = '';
+        return;
     }
-    camposDiv.innerHTML = ''; 
+    camposDiv.innerHTML = '';
 
     const servico = SERVICOS_DB[servicoKey];
     let html = '';
-
     switch (servico.tipo) {
         case 'parede_area_custom':
         case 'estrutural_area':
-            html = `<p>Informe as medidas exatas da área de aplicação:</p>
-                    <div class="campo"><label>Comprimento a aplicar (m):</label><input type="number" name="custom_comp" placeholder="Ex: 3.21"></div>
-                    <div class="campo"><label>Largura a aplicar (m):</label><input type="number" name="custom_larg" placeholder="Ex: 0.50"></div>
-                    <p><b>Área calculada: <span class="area-total">0.00</span> m²</b></p>`;
+            html = `<p>Informe as medidas exatas da área de aplicação:</p><div class="campo"><label>Comprimento a aplicar (m):</label><input type="number" name="custom_comp" placeholder="Ex: 3.21" min="0" step="0.01"></div><div class="campo"><label>Largura a aplicar (m):</label><input type="number" name="custom_larg" placeholder="Ex: 0.50" min="0" step="0.01"></div><p><b>Área calculada: <span class="area-total">0.00</span> m²</b></p>`;
             break;
         case 'parede_vol_custom':
-            html = `<p>Informe as medidas exatas da área a ser demolida:</p>
-                    <div class="campo"><label>Comprimento a demolir (m):</label><input type="number" name="custom_comp" placeholder="Ex: 0.80"></div>
-                    <div class="campo"><label>Altura a demolir (m):</label><input type="number" name="custom_alt" placeholder="Ex: 2.10"></div>
-                    <div class="campo"><label>Espessura (m):</label><input type="number" name="espessura" value="0.15"></div>
-                    <p><b>Volume de demolição: <span class="vol-total">0.000</span> m³</b></p>`;
+            html = `<p>Informe as medidas exatas da área a ser demolida:</p><div class="campo"><label>Comprimento a demolir (m):</label><input type="number" name="custom_comp" placeholder="Ex: 0.80" min="0" step="0.01"></div><div class="campo"><label>Altura a demolir (m):</label><input type="number" name="custom_alt" placeholder="Ex: 2.10" min="0" step="0.01"></div><div class="campo"><label>Espessura (m):</label><input type="number" name="espessura" value="0.15" min="0" step="0.01"></div><p><b>Volume de demolição: <span class="vol-total">0.000</span> m³</b></p>`;
             break;
-        case 'piso_custom': 
-             html = `<p>O cálculo usará a área do piso informada para o cômodo.</p>`; 
-             break;
-        case 'piso_vol_custom': 
-            html = `<div class="campo"><label>Espessura (m):</label><input type="number" name="espessura" value="0.05"></div><p>O cálculo usará a área do piso informada.</p>`; 
-            break;
-        case 'teto_custom':
-             html = `<p>O cálculo usará a área do teto informada para o cômodo.</p>`; 
-             break;
+        case 'piso_custom': html = `<p>O cálculo usará a área do piso informada para o cômodo.</p>`; break;
+        case 'piso_vol_custom': html = `<div class="campo"><label>Espessura (m):</label><input type="number" name="espessura" value="0.05" min="0" step="0.01"></div><p>O cálculo usará a área do piso informada.</p>`; break;
+        case 'teto_custom': html = `<p>O cálculo usará a área do teto informada para o cômodo.</p>`; break;
         case 'cobertura': html = `<p>O cálculo usará a área do telhado informada.</p>`; break;
         case 'cobertura_linear':
         case 'estrutural_linear':
         case 'piso_linear':
-            html = `<div class="campo"><label>Comprimento (m):</label><input type="number" name="medida"></div>`; break;
+            html = `<div class="campo"><label>Comprimento (m):</label><input type="number" name="medida" min="0" step="0.01"></div>`; break;
         case 'unitario_parede':
         case 'equipamento_geral':
         case 'unitario_teto':
         case 'estrutural_unitario':
         case 'piso_unitario':
-            html = `<div class="campo"><label>Quantidade:</label><input type="number" name="quantidade" value="1" step="1"></div>`; break;
+            html = `<div class="campo"><label>Quantidade:</label><input type="number" name="quantidade" value="1" min="1" step="1"></div>`; break;
     }
     camposDiv.innerHTML = html;
 }
@@ -303,31 +268,26 @@ function gerarRelatorio() {
         const servicoKey = select?.value;
 
         if (!servicoKey) return null;
-
-        if (servicoKey === 'sem_intervencao') {
-            return { nome: "Sem intervenção", isIntervention: false };
-        }
+        if (servicoKey === 'sem_intervencao') return { nome: "Sem intervenção", isIntervention: false };
 
         const servico = SERVICOS_DB[servicoKey];
         let quant = 0, detalhe = '';
-        
         const getVal = (selector, parent) => parent ? parseFloat(parent.querySelector(selector)?.value) || 0 : 0;
-        
         const comodoDiv = servicoDiv.closest('.bloco[data-bloco-type="comodo"]');
         const coberturaDiv = servicoDiv.closest('.bloco[data-bloco-type="cobertura"]');
 
         switch (servico.tipo) {
             case 'cobertura': quant = getVal('#areaTelhado', coberturaDiv); break;
-            case 'cobertura_linear': 
+            case 'cobertura_linear':
             case 'estrutural_linear':
             case 'piso_linear':
-                quant = getVal('[name=medida]', servicoDiv); 
+                quant = getVal('[name=medida]', servicoDiv);
                 break;
             case 'parede_area_custom':
                 const customCompArea = getVal('[name=custom_comp]', servicoDiv);
-                const customAltArea = getVal('[name=custom_alt]', servicoDiv);
-                quant = customCompArea * customAltArea;
-                detalhe = `(${customCompArea.toFixed(2)}m x ${customAltArea.toFixed(2)}m)`;
+                const customLargArea = getVal('[name=custom_larg]', servicoDiv);
+                quant = customCompArea * customLargArea;
+                detalhe = `(${customCompArea.toFixed(2)}m x ${customLargArea.toFixed(2)}m)`;
                 break;
             case 'estrutural_area':
                 const compEstrutural = getVal('[name=custom_comp]', servicoDiv);
@@ -342,12 +302,12 @@ function gerarRelatorio() {
                 quant = customCompVol * customAltVol * esp;
                 detalhe = `(${customCompVol.toFixed(2)}m x ${customAltVol.toFixed(2)}m x ${esp.toFixed(2)}m)`;
                 break;
-            case 'piso_custom': 
-                quant = getVal('.comodo-area-piso', comodoDiv); break;
+            case 'piso_custom': quant = getVal('.comodo-area-piso', comodoDiv); break;
             case 'piso_vol_custom':
-                 const areaPiso = getVal('.comodo-area-piso', comodoDiv);
-                 const espVol = getVal('[name=espessura]', servicoDiv);
-                 quant = areaPiso * espVol; detalhe = `(${areaPiso.toFixed(2)}m² x ${espVol.toFixed(2)}m)`;
+                const areaPiso = getVal('.comodo-area-piso', comodoDiv);
+                const espVol = getVal('[name=espessura]', servicoDiv);
+                quant = areaPiso * espVol;
+                detalhe = `(${areaPiso.toFixed(2)}m² x ${espVol.toFixed(2)}m)`;
                 break;
             case 'teto_custom':
                 quant = getVal('.comodo-area-teto', comodoDiv); break;
@@ -367,6 +327,18 @@ function gerarRelatorio() {
         return null;
     };
 
+    const processarComentarios = (containerElement) => {
+        let comentariosTexto = '';
+        containerElement.querySelectorAll('.comentario-bloco').forEach(comentarioDiv => {
+            const textarea = comentarioDiv.querySelector('textarea');
+            if (textarea && textarea.value.trim() !== '') {
+                comentariosTexto += `  ▪ Observação: ${textarea.value.trim()}\n`;
+            }
+        });
+        return comentariosTexto;
+    };
+
+    // Cobertura
     const areaTelhado = parseFloat(document.getElementById('areaTelhado').value) || 0;
     const pdMax = parseFloat(document.getElementById('pdMaximo').value) || 0;
     const pdMin = parseFloat(document.getElementById('pdMinimo').value) || 0;
@@ -374,89 +346,98 @@ function gerarRelatorio() {
     document.querySelectorAll('#bloco-cobertura .servico-item').forEach(servicoDiv => {
         const res = processarServico(servicoDiv);
         if (res) {
-            if (res.isIntervention) {
-                 texto += `▪ ${res.nome} = ${res.quant.toFixed(2)} ${res.unidade}\n`;
-            } else {
-                 texto += `▪ ${res.nome}\n`;
-            }
+            texto += res.isIntervention ? `▪ ${res.nome} = ${res.quant.toFixed(2)} ${res.unidade}\n` : `▪ ${res.nome}\n`;
         }
     });
+    texto += processarComentarios(document.getElementById('bloco-cobertura'));
 
+    // Cômodos
     document.querySelectorAll('#listaComodos > .bloco').forEach(comodoDiv => {
         const nome = comodoDiv.querySelector('.comodo-nome').value || "Cômodo";
         const pdMaxComodo = parseFloat(comodoDiv.querySelector('.comodo-pd-max').value) || 0;
         const pdMinComodo = parseFloat(comodoDiv.querySelector('.comodo-pd-min').value) || 0;
         texto += `\n----------------------------------------\nCÔMODO: ${nome.toUpperCase()} | PD Máx: ${pdMaxComodo.toFixed(2)}m | PD Mín: ${pdMinComodo.toFixed(2)}m\n----------------------------------------\n`;
 
+        // Paredes
         comodoDiv.querySelectorAll('.parede-bloco').forEach((paredeDiv, index) => {
             const comp = parseFloat(paredeDiv.querySelector('.parede-comprimento').value) || 0;
             texto += `\n◊ Parede ${index + 1} (${comp.toFixed(2)}m):\n`;
             paredeDiv.querySelectorAll('.servico-item').forEach(servicoDiv => {
                 const res = processarServico(servicoDiv);
                 if (res) {
-                    if (res.isIntervention) {
-                        const casasDecimais = res.unidade === 'm³' ? 3 : (res.unidade === 'un' ? 0 : 2);
-                        texto += `  ▪ ${res.nome} = ${res.quant.toFixed(casasDecimais)} ${res.unidade} ${res.detalhe}\n`;
-                    } else {
-                        texto += `  ▪ ${res.nome}\n`;
-                    }
+                    const casasDecimais = res.unidade === 'm³' ? 3 : (res.unidade === 'un' ? 0 : 2);
+                    texto += res.isIntervention ? `  ▪ ${res.nome} = ${res.quant.toFixed(casasDecimais)} ${res.unidade} ${res.detalhe}\n` : `  ▪ ${res.nome}\n`;
                 }
             });
+            texto += processarComentarios(paredeDiv);
         });
-        
-        let textoEstrutural = '\n◊ REPARO ESTRUTURAL:\n';
+
+        // Reparo Estrutural
+        let textoEstrutural = '';
         let temServicoEstrutural = false;
         comodoDiv.querySelectorAll('.estrutural-container .servico-item').forEach(servicoDiv => {
             const res = processarServico(servicoDiv);
-            if(res) {
-                temServicoEstrutural = true;
-                if (res.isIntervention) {
-                    const casasDecimais = res.unidade === 'm³' ? 3 : (res.unidade === 'un' ? 0 : 2);
-                    textoEstrutural += `  ▪ ${res.nome} = ${res.quant.toFixed(casasDecimais)} ${res.unidade} ${res.detalhe}\n`;
-                } else {
-                    textoEstrutural += `  ▪ ${res.nome}\n`;
+            if (res) {
+                if (!temServicoEstrutural) {
+                    textoEstrutural += '\n◊ REPARO ESTRUTURAL:\n';
+                    temServicoEstrutural = true;
                 }
+                const casasDecimais = res.unidade === 'm³' ? 3 : (res.unidade === 'un' ? 0 : 2);
+                textoEstrutural += res.isIntervention ? `  ▪ ${res.nome} = ${res.quant.toFixed(casasDecimais)} ${res.unidade} ${res.detalhe}\n` : `  ▪ ${res.nome}\n`;
             }
         });
-        if (temServicoEstrutural) texto += textoEstrutural;
+        const comentariosEstruturais = processarComentarios(comodoDiv.querySelector('.estrutural-container'));
+        if (comentariosEstruturais) {
+            if (!temServicoEstrutural) textoEstrutural += '\n◊ REPARO ESTRUTURAL:\n';
+            textoEstrutural += comentariosEstruturais;
+        }
+        if (textoEstrutural) texto += textoEstrutural;
 
+        // Subseções (Piso, Teto, Equipamentos)
         const processSubSection = (containerSelector, title, areaInfo) => {
-            let subTexto = `\n◊ ${title} | Área: ${areaInfo.toFixed(2)} m²:\n`;
+            let subTexto = '';
             let hasContent = false;
-            comodoDiv.querySelectorAll(containerSelector).forEach(servicoDiv => {
+            comodoDiv.querySelectorAll(`${containerSelector} .servico-item`).forEach(servicoDiv => {
                 const res = processarServico(servicoDiv);
-                if(res) {
+                if (res) {
+                    if (!hasContent) subTexto += `\n◊ ${title} | Área: ${areaInfo.toFixed(2)} m²:\n`;
                     hasContent = true;
-                    if (res.isIntervention) {
-                        const casasDecimais = res.unidade === 'm³' ? 3 : (res.unidade === 'un' ? 0 : 2);
-                        subTexto += `  ▪ ${res.nome} = ${res.quant.toFixed(casasDecimais)} ${res.unidade} ${res.detalhe}\n`;
-                    } else {
-                        subTexto += `  ▪ ${res.nome}\n`;
-                    }
+                    const casasDecimais = res.unidade === 'm³' ? 3 : (res.unidade === 'un' ? 0 : 2);
+                    subTexto += res.isIntervention ? `  ▪ ${res.nome} = ${res.quant.toFixed(casasDecimais)} ${res.unidade} ${res.detalhe}\n` : `  ▪ ${res.nome}\n`;
                 }
             });
-            if (hasContent) texto += subTexto;
+            const comentarios = processarComentarios(comodoDiv.querySelector(containerSelector));
+            if (comentarios) {
+                if (!hasContent) subTexto += `\n◊ ${title} | Área: ${areaInfo.toFixed(2)} m²:\n`;
+                subTexto += comentarios;
+            }
+            return subTexto;
         };
-        
+
         const areaPiso = parseFloat(comodoDiv.querySelector('.comodo-area-piso').value) || 0;
         const areaTeto = parseFloat(comodoDiv.querySelector('.comodo-area-teto').value) || 0;
-        processSubSection('.piso-container .servico-item', 'PISO', areaPiso);
-        processSubSection('.teto-container .servico-item', 'TETO', areaTeto);
+        texto += processSubSection('.piso-container', 'PISO', areaPiso);
+        texto += processSubSection('.teto-container', 'TETO', areaTeto);
 
-        let textoServicosGerais = '\n◊ EQUIPAMENTOS GERAIS:\n';
+        // Equipamentos Gerais
+        let textoServicosGerais = '';
         let temServicosGerais = false;
         comodoDiv.querySelectorAll('.equipamentos-container .servico-item').forEach(servicoDiv => {
             const res = processarServico(servicoDiv);
-            if(res) {
-                temServicosGerais = true;
-                if (res.isIntervention) {
-                    textoServicosGerais += `  ▪ ${res.nome} = ${res.quant.toFixed(0)} ${res.unidade} ${res.detalhe}\n`;
-                } else {
-                    textoServicosGerais += `  ▪ ${res.nome}\n`;
+            if (res) {
+                if (!temServicosGerais) {
+                    textoServicosGerais += '\n◊ EQUIPAMENTOS GERAIS:\n';
+                    temServicosGerais = true;
                 }
+                textoServicosGerais += res.isIntervention ? `  ▪ ${res.nome} = ${res.quant.toFixed(0)} ${res.unidade} ${res.detalhe}\n` : `  ▪ ${res.nome}\n`;
             }
         });
-        if (temServicosGerais) texto += textoServicosGerais;
+        const comentariosEquipamentos = processarComentarios(comodoDiv.querySelector('.equipamentos-container'));
+        if (comentariosEquipamentos) {
+            if (!temServicosGerais) textoServicosGerais += '\n◊ EQUIPAMENTOS GERAIS:\n';
+            textoServicosGerais += comentariosEquipamentos;
+        }
+        if (textoServicosGerais) texto += textoServicosGerais;
     });
 
     texto += `\n\n========================================\nQUANTITATIVOS TOTAIS PARA ORÇAMENTO\n========================================\n`;
@@ -470,42 +451,30 @@ function gerarRelatorio() {
 }
 
 async function gerarPDF() {
-    document.querySelectorAll('.collapsible-content, .service-collapsible-content').forEach(el => el.classList.remove('hidden'));
-    document.querySelectorAll('[data-action="toggle-collapse"]').forEach(btn => btn.textContent = 'Concluir Seção');
-    document.querySelectorAll('[data-action="toggle-service"]').forEach(btn => btn.textContent = 'Fechar Serviço');
-
-    const nomeBeneficiario = document.getElementById('nomeBeneficiario').value || "Beneficiario";
-    const nomeArquivo = `Memorial_Descritivo_${nomeBeneficiario.replace(/ /g, "_")}.pdf`;
-    const relatorioElement = document.getElementById('resumo-container');
-    
-    await html2canvas(relatorioElement, { scale: 2 }).then(canvas => {
-        const imgData = canvas.toDataURL('image/png');
+    try {
+        document.querySelectorAll('.collapsible-content, .service-collapsible-content').forEach(el => el.classList.remove('hidden'));
+        document.querySelectorAll('.comentario-bloco textarea').forEach(textarea => textarea.classList.remove('hidden'));
+        document.querySelectorAll('.comentario-bloco .comment-text').forEach(text => text.classList.add('hidden'));
+        document.querySelectorAll('[data-action="toggle-collapse"]').forEach(btn => btn.textContent = 'Concluir Seção');
+        document.querySelectorAll('[data-action="toggle-service"]').forEach(btn => btn.textContent = 'Fechar Serviço');
+        document.querySelectorAll('[data-action="toggle-comment"]').forEach(btn => btn.textContent = 'Editar Comentário');
+        const texto = gerarRelatorio();
         const pdf = new jsPDF('p', 'pt', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        const imgWidth = pdfWidth - 80;
-        const imgHeight = canvas.height * imgWidth / canvas.width;
-        let heightLeft = imgHeight;
-        let position = 40;
-
-        pdf.addImage(imgData, 'PNG', 40, position, imgWidth, imgHeight);
-        heightLeft -= (pdfHeight - 80);
-
-        while (heightLeft > 0) {
-            position -= (pdfHeight - 80);
-            pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 40, position, imgWidth, imgHeight);
-            heightLeft -= (pdfHeight - 80);
-        }
+        pdf.setFontSize(10);
+        pdf.text(texto.split('\n'), 40, 40, { maxWidth: 500 });
+        const nomeBeneficiario = document.getElementById('nomeBeneficiario').value || "Beneficiario";
+        const nomeArquivo = `Memorial_Descritivo_${nomeBeneficiario.replace(/ /g, "_")}.pdf`;
         pdf.save(nomeArquivo);
-    });
+    } catch (error) {
+        alert('Erro ao gerar PDF: ' + error.message);
+    }
 }
 
 function handleAppActions(e) {
     const target = e.target.closest('[data-action]');
     if (!target) return;
 
-    e.preventDefault(); 
+    e.preventDefault();
     const action = target.dataset.action;
     let container, tipos = [];
 
@@ -517,37 +486,48 @@ function handleAppActions(e) {
             comodoDiv.id = comodoId;
             comodoDiv.setAttribute('data-bloco-type', 'comodo');
             comodoDiv.innerHTML = `
-                <h3><span>Novo Cômodo</span><button class="btn-remove" data-action="remove-element" data-target-id="${comodoId}">${REMOVE_ICON_SVG}</button></h3>
+                <h3><span>Novo Cômodo</span><button class="btn-remove" data-action="remove-element" data-target-id="${comodoId}" aria-label="Remover cômodo">${REMOVE_ICON_SVG}</button></h3>
                 <div class="collapsible-content">
                     <div class="campo"><label>Nome do Cômodo:</label><input type="text" class="comodo-nome" placeholder="Ex: Cozinha"></div>
                     <div class="grid-3-col">
-                         <div class="campo"><label>PD Máximo (m):</label><input type="number" class="comodo-pd-max" placeholder="Ex: 2.85"></div>
-                         <div class="campo"><label>PD Mínimo (m):</label><input type="number" class="comodo-pd-min" placeholder="Ex: 2.48"></div>
+                        <div class="campo"><label>PD Máximo (m):</label><input type="number" class="comodo-pd-max" placeholder="Ex: 2.85" min="0" step="0.01"></div>
+                        <div class="campo"><label>PD Mínimo (m):</label><input type="number" class="comodo-pd-min" placeholder="Ex: 2.48" min="0" step="0.01"></div>
                     </div>
-                    
                     <h4>Paredes do Cômodo</h4>
                     <div class="paredes-container"></div>
-                    <button class="btn-add btn-add-small" data-action="add-parede">Adicionar Parede</button>
-                    
+                    <button class="btn-add btn-add-small" data-action="add-parede" aria-label="Adicionar parede ao cômodo">Adicionar Parede</button>
                     <h4>Reparo Estrutural</h4>
                     <div class="estrutural-container servicos-container"></div>
-                    <button class="btn-add btn-add-small" data-action="add-servico-estrutural">Adicionar Serviço Estrutural</button>
-
+                    <div class="comentarios-container"></div>
+                    <div class="botoes-acoes">
+                        <button class="btn-add btn-add-small" data-action="add-servico-estrutural" aria-label="Adicionar serviço estrutural">Adicionar Serviço Estrutural</button>
+                        <button class="btn-add-small" data-action="add-comentario" aria-label="Adicionar comentário">Adicionar Comentário</button>
+                    </div>
                     <h4>Piso do Cômodo</h4>
-                    <div class="campo"><label>Área do Piso (m²):</label><input type="number" class="comodo-area-piso" placeholder="Área exata do piso"></div>
+                    <div class="campo"><label>Área do Piso (m²):</label><input type="number" class="comodo-area-piso" placeholder="Área exata do piso" min="0" step="0.01"></div>
                     <div class="piso-container servicos-container"></div>
-                    <button class="btn-add btn-add-small" data-action="add-servico-piso">Adicionar Serviço ao Piso</button>
-
+                    <div class="comentarios-container"></div>
+                    <div class="botoes-acoes">
+                        <button class="btn-add btn-add-small" data-action="add-servico-piso" aria-label="Adicionar serviço ao piso">Adicionar Serviço ao Piso</button>
+                        <button class="btn-add-small" data-action="add-comentario" aria-label="Adicionar comentário">Adicionar Comentário</button>
+                    </div>
                     <h4>Teto do Cômodo</h4>
-                    <div class="campo"><label>Área do Teto (m²):</label><input type="number" class="comodo-area-teto" placeholder="Área exata do teto"></div>
+                    <div class="campo"><label>Área do Teto (m²):</label><input type="number" class="comodo-area-teto" placeholder="Área exata do teto" min="0" step="0.01"></div>
                     <div class="teto-container servicos-container"></div>
-                    <button class="btn-add btn-add-small" data-action="add-servico-teto">Adicionar Serviço ao Teto</button>
-
+                    <div class="comentarios-container"></div>
+                    <div class="botoes-acoes">
+                        <button class="btn-add btn-add-small" data-action="add-servico-teto" aria-label="Adicionar serviço ao teto">Adicionar Serviço ao Teto</button>
+                        <button class="btn-add-small" data-action="add-comentario" aria-label="Adicionar comentário">Adicionar Comentário</button>
+                    </div>
                     <h4>Equipamentos e Instalações Gerais</h4>
                     <div class="equipamentos-container servicos-container"></div>
-                    <button class="btn-add btn-add-small" data-action="add-equipamento-geral">Adicionar Equipamento</button>
+                    <div class="comentarios-container"></div>
+                    <div class="botoes-acoes">
+                        <button class="btn-add btn-add-small" data-action="add-equipamento-geral" aria-label="Adicionar equipamento geral">Adicionar Equipamento</button>
+                        <button class="btn-add-small" data-action="add-comentario" aria-label="Adicionar comentário">Adicionar Comentário</button>
+                    </div>
                 </div>
-                <button class="btn-toggle" data-action="toggle-collapse">Concluir Seção</button>
+                <button class="btn-toggle" data-action="toggle-collapse" aria-label="Concluir ou editar seção do cômodo">Concluir Seção</button>
             `;
             document.getElementById('listaComodos').appendChild(comodoDiv);
             return;
@@ -563,13 +543,41 @@ function handleAppActions(e) {
             paredeDiv.className = 'parede-bloco';
             paredeDiv.id = paredeId;
             paredeDiv.innerHTML = `
-                <h5><span>Parede ${numParedes}</span><button class="btn-remove" data-action="remove-element" data-target-id="${paredeId}">${REMOVE_ICON_SVG}</button></h5>
-                <div class="campo"><label>Comprimento da Parede (m):</label><input type="number" class="parede-comprimento"></div>
+                <h5><span>Parede ${numParedes}</span><button class="btn-remove" data-action="remove-element" data-target-id="${paredeId}" aria-label="Remover parede">${REMOVE_ICON_SVG}</button></h5>
+                <div class="campo"><label>Comprimento da Parede (m):</label><input type="number" class="parede-comprimento" min="0" step="0.01"></div>
                 <div class="servicos-container"></div>
-                <button class="btn-add btn-add-small" data-action="add-servico-parede">Adicionar Serviço à Parede</button>
+                <div class="comentarios-container"></div>
+                <div class="botoes-acoes">
+                    <button class="btn-add btn-add-small" data-action="add-servico-parede" aria-label="Adicionar serviço à parede">Adicionar Serviço à Parede</button>
+                    <button class="btn-add-small" data-action="add-comentario" aria-label="Adicionar comentário">Adicionar Comentário</button>
+                </div>
             `;
             paredesContainer.appendChild(paredeDiv);
-            return; 
+            return;
+        case 'add-comentario':
+            const comentarioContainer = target.closest('.botoes-acoes').previousElementSibling;
+            if (comentarioContainer && comentarioContainer.classList.contains('comentarios-container')) {
+                const comentarioId = `comentario_${nextId++}`;
+                const comentarioDiv = document.createElement('div');
+                comentarioDiv.className = 'comentario-bloco';
+                comentarioDiv.id = comentarioId;
+                comentarioDiv.innerHTML = `
+                    <div class="comment-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <label style="margin-bottom: 0;">Observação:</label>
+                        <div class="header-buttons">
+                            <button class="btn-toggle btn-toggle-comment" data-action="toggle-comment" aria-label="Editar comentário">Editar Comentário</button>
+                            <button class="btn-remove" data-action="remove-element" data-target-id="${comentarioId}" aria-label="Remover comentário">${REMOVE_ICON_SVG}</button>
+                        </div>
+                    </div>
+                    <div class="comment-content">
+                        <textarea placeholder="Digite aqui uma observação que não está na lista de serviços..."></textarea>
+                        <p class="comment-text hidden"></p>
+                    </div>
+                    <button class="btn-finalizar hidden" data-action="finalize-comment" aria-label="Finalizar comentário">Finalizar</button>
+                `;
+                comentarioContainer.appendChild(comentarioDiv);
+            }
+            return;
         case 'add-servico-parede':
             container = target.closest('.parede-bloco').querySelector('.servicos-container');
             tipos = ['parede_area_custom', 'parede_vol_custom', 'unitario_parede'];
@@ -604,63 +612,83 @@ function handleAppActions(e) {
             serviceContent.classList.toggle('hidden');
             target.textContent = serviceContent.classList.contains('hidden') ? 'Editar Serviço' : 'Fechar Serviço';
             return;
+        case 'toggle-comment':
+            const comentarioDiv = target.closest('.comentario-bloco');
+            const textarea = comentarioDiv.querySelector('textarea');
+            const commentText = comentarioDiv.querySelector('.comment-text');
+            const finalizarBtn = comentarioDiv.querySelector('.btn-finalizar');
+            if (textarea.classList.contains('hidden')) {
+                textarea.classList.remove('hidden');
+                commentText.classList.add('hidden');
+                finalizarBtn.classList.toggle('hidden', !textarea.value.trim());
+                target.textContent = 'Fechar Comentário';
+            } else {
+                textarea.classList.add('hidden');
+                commentText.textContent = textarea.value.trim() || 'Nenhum comentário inserido';
+                commentText.classList.remove('hidden');
+                finalizarBtn.classList.add('hidden');
+                target.textContent = 'Editar Comentário';
+            }
+            return;
+        case 'finalize-comment':
+            const comentarioDivFinalizar = target.closest('.comentario-bloco');
+            const textareaFinalizar = comentarioDivFinalizar.querySelector('textarea');
+            const commentTextFinalizar = comentarioDivFinalizar.querySelector('.comment-text');
+            const toggleBtn = comentarioDivFinalizar.querySelector('.btn-toggle-comment');
+            textareaFinalizar.classList.add('hidden');
+            commentTextFinalizar.textContent = textareaFinalizar.value.trim() || 'Nenhum comentário inserido';
+            commentTextFinalizar.classList.remove('hidden');
+            target.classList.add('hidden');
+            toggleBtn.textContent = 'Editar Comentário';
+            return;
         case 'gerar-relatorio':
+            if (!document.getElementById('nomeBeneficiario').value.trim()) {
+                alert('ERRO: Preencha o campo "Nome Completo" do beneficiário.');
+                return;
+            }
             let erroDeValidacao = null;
             const todosOsServicos = document.querySelectorAll('.servico-item');
-
             for (const servicoDiv of todosOsServicos) {
                 const select = servicoDiv.querySelector('select');
-                if (!select || !select.value || select.value === 'sem_intervencao') {
-                    continue;
-                }
-
+                if (!select || !select.value || select.value === 'sem_intervencao') continue;
                 const servicoKey = select.value;
                 const servico = SERVICOS_DB[servicoKey];
                 const nomeServico = servico.nome;
-
                 const getContexto = (el) => {
                     const parede = el.closest('.parede-bloco');
                     const comodo = el.closest('.bloco[data-bloco-type="comodo"]');
                     const cobertura = el.closest('.bloco[data-bloco-type="cobertura"]');
-
                     if (parede) {
                         const numParede = Array.from(parede.parentElement.children).indexOf(parede) + 1;
                         const nomeComodo = comodo.querySelector('.comodo-nome').value || 'Cômodo';
                         return `[${nomeComodo} -> Parede ${numParede}]`;
                     }
-                    if (comodo) {
-                        return `[${comodo.querySelector('.comodo-nome').value || 'Cômodo'}]`;
-                    }
-                    if (cobertura) {
-                        return '[Cobertura]';
-                    }
+                    if (comodo) return `[${comodo.querySelector('.comodo-nome').value || 'Cômodo'}]`;
+                    if (cobertura) return '[Cobertura]';
                     return '[Local não identificado]';
                 };
                 const contexto = getContexto(servicoDiv);
-
                 const checkInput = (selector, fieldName) => {
                     const input = servicoDiv.querySelector(selector);
-                    if (input && (input.value === '' || input.value === null)) {
-                        return `ERRO: Preencha o campo "${fieldName}" para o serviço "${nomeServico}" em ${contexto}.`;
+                    if (input && (input.value === '' || input.value === null || parseFloat(input.value) <= 0)) {
+                        return `ERRO: Preencha o campo "${fieldName}" com um valor válido para o serviço "${nomeServico}" em ${contexto}.`;
                     }
                     return null;
                 };
-                
                 const checkMainInput = (selector, fieldName, contextElement) => {
-                     const input = contextElement.querySelector(selector);
-                     if (input && (input.value === '' || input.value === null)) {
-                        return `ERRO: Preencha o campo "${fieldName}" em ${contexto} para calcular o serviço "${nomeServico}".`;
-                     }
-                     return null;
+                    const input = contextElement.querySelector(selector);
+                    if (input && (input.value === '' || input.value === null || parseFloat(input.value) <= 0)) {
+                        return `ERRO: Preencha o campo "${fieldName}" com um valor válido em ${contexto} para calcular o serviço "${nomeServico}".`;
+                    }
+                    return null;
                 };
-
                 switch (servico.tipo) {
                     case 'parede_area_custom':
                     case 'estrutural_area':
-                        erroDeValidacao = checkInput('[name="custom_comp"]', 'Comprimento a aplicar') || checkInput('[name="custom_larg"]', 'Largura a aplicar');
+                        erroDeValidacao = checkInput('[name="custom_comp"]', 'Comprimento a aplicar') || checkInput('[name=custom_larg]', 'Largura a aplicar');
                         break;
                     case 'parede_vol_custom':
-                        erroDeValidacao = checkInput('[name="custom_comp"]', 'Comprimento a demolir') || checkInput('[name="custom_alt"]', 'Altura a demolir');
+                        erroDeValidacao = checkInput('[name="custom_comp"]', 'Comprimento a demolir') || checkInput('[name=custom_alt]', 'Altura a demolir') || checkInput('[name=espessura]', 'Espessura');
                         break;
                     case 'cobertura_linear':
                     case 'estrutural_linear':
@@ -668,38 +696,36 @@ function handleAppActions(e) {
                         erroDeValidacao = checkInput('[name="medida"]', 'Comprimento');
                         break;
                     case 'cobertura':
-                         erroDeValidacao = checkMainInput('#areaTelhado', 'Área do Telhado', document.getElementById('bloco-cobertura'));
-                         break;
+                        erroDeValidacao = checkMainInput('#areaTelhado', 'Área do Telhado', document.getElementById('bloco-cobertura'));
+                        break;
                     case 'piso_custom':
                     case 'piso_vol_custom':
-                         erroDeValidacao = checkMainInput('.comodo-area-piso', 'Área do Piso', servicoDiv.closest('.bloco'));
-                         break;
+                        erroDeValidacao = checkMainInput('.comodo-area-piso', 'Área do Piso', servicoDiv.closest('.bloco'));
+                        break;
                     case 'teto_custom':
-                         erroDeValidacao = checkMainInput('.comodo-area-teto', 'Área do Teto', servicoDiv.closest('.bloco'));
-                         break;
+                        erroDeValidacao = checkMainInput('.comodo-area-teto', 'Área do Teto', servicoDiv.closest('.bloco'));
+                        break;
+                    case 'unitario_parede':
+                    case 'equipamento_geral':
+                    case 'unitario_teto':
+                    case 'estrutural_unitario':
+                    case 'piso_unitario':
+                        erroDeValidacao = checkInput('[name="quantidade"]', 'Quantidade');
+                        break;
                 }
-
-                if (erroDeValidacao) {
-                    break; 
-                }
+                if (erroDeValidacao) break;
             }
-
             if (erroDeValidacao) {
                 alert(erroDeValidacao);
                 return;
             }
 
-            // A lógica de expandir tudo agora só acontece para o PDF.
             const textoFinal = gerarRelatorio();
             document.getElementById('resumo').textContent = textoFinal;
             document.getElementById('output').style.display = 'block';
             document.getElementById('gerarPDF').style.display = 'inline-block';
             return;
         case 'gerar-pdf':
-            // Expande tudo antes de gerar o PDF.
-            document.querySelectorAll('.collapsible-content, .service-collapsible-content').forEach(el => el.classList.remove('hidden'));
-            document.querySelectorAll('[data-action="toggle-collapse"]').forEach(btn => btn.textContent = 'Concluir Seção');
-            document.querySelectorAll('[data-action="toggle-service"]').forEach(btn => btn.textContent = 'Fechar Serviço');
             gerarPDF();
             return;
         default:
@@ -711,24 +737,13 @@ function handleAppActions(e) {
         const servicoDiv = document.createElement('div');
         servicoDiv.className = 'servico-item';
         servicoDiv.id = servicoId;
-        
         const select = document.createElement('select');
         popularSelectServicos(select, tipos);
 
-        servicoDiv.innerHTML = `
-            <div class="service-header">
-                <strong></strong>
-                <div class="header-buttons">
-                    <button class="btn-remove" data-action="remove-element" data-target-id="${servicoId}">${REMOVE_ICON_SVG}</button>
-                </div>
-            </div>
-            <div class="service-collapsible-content"></div>
-        `;
-        
+        servicoDiv.innerHTML = `<div class="service-header"><strong></strong><div class="header-buttons"><button class="btn-remove" data-action="remove-element" data-target-id="${servicoId}" aria-label="Remover serviço">${REMOVE_ICON_SVG}</button></div></div><div class="service-collapsible-content"></div>`;
         const content = servicoDiv.querySelector('.service-collapsible-content');
         const label = document.createElement('label');
         label.textContent = 'Serviço:';
-
         content.appendChild(label);
         content.appendChild(select);
         content.innerHTML += `<div class="campos-especificos" style="margin-top:10px;"></div>`;
@@ -739,26 +754,31 @@ function handleAppActions(e) {
 document.addEventListener('input', (e) => {
     const target = e.target;
     const servicoDiv = target.closest('.servico-item');
-    if(servicoDiv) {
-        if(target.matches('[name="custom_comp"], [name="custom_larg"]')) {
+    const comentarioDiv = target.closest('.comentario-bloco');
+    if (servicoDiv) {
+        if (target.matches('[name="custom_comp"], [name="custom_larg"]')) {
             const comp = parseFloat(servicoDiv.querySelector('[name="custom_comp"]')?.value) || 0;
             const larg = parseFloat(servicoDiv.querySelector('[name="custom_larg"]')?.value) || 0;
             const totalSpan = servicoDiv.querySelector('.area-total');
-            if(totalSpan) totalSpan.textContent = (comp * larg).toFixed(2);
+            if (totalSpan) totalSpan.textContent = (comp * larg).toFixed(2);
         }
-        if(target.matches('[name="custom_comp"], [name="custom_alt"]')) {
+        if (target.matches('[name="custom_comp"], [name="custom_alt"]')) {
             const comp = parseFloat(servicoDiv.querySelector('[name="custom_comp"]')?.value) || 0;
             const alt = parseFloat(servicoDiv.querySelector('[name="custom_alt"]')?.value) || 0;
             const totalSpan = servicoDiv.querySelector('.area-total');
-            if(totalSpan) totalSpan.textContent = (comp * alt).toFixed(2);
+            if (totalSpan) totalSpan.textContent = (comp * alt).toFixed(2);
         }
-        if(target.matches('[name="custom_comp"], [name="custom_alt"], [name="espessura"]')) {
+        if (target.matches('[name="custom_comp"], [name="custom_alt"], [name="espessura"]')) {
             const comp = parseFloat(servicoDiv.querySelector('[name="custom_comp"]')?.value) || 0;
             const alt = parseFloat(servicoDiv.querySelector('[name="custom_alt"]')?.value) || 0;
             const esp = parseFloat(servicoDiv.querySelector('[name="espessura"]')?.value) || 0;
             const totalSpan = servicoDiv.querySelector('.vol-total');
-            if(totalSpan) totalSpan.textContent = (comp * alt * esp).toFixed(3);
+            if (totalSpan) totalSpan.textContent = (comp * alt * esp).toFixed(3);
         }
+    }
+    if (comentarioDiv && target.matches('textarea')) {
+        const finalizarBtn = comentarioDiv.querySelector('.btn-finalizar');
+        finalizarBtn.classList.toggle('hidden', !target.value.trim());
     }
 });
 
@@ -772,24 +792,10 @@ document.addEventListener('change', (e) => {
             const servicoId = servicoDiv.id;
 
             if (target.value) {
-                const serviceName = (target.value === 'sem_intervencao')
-                    ? 'Sem intervenção'
-                    : target.options[target.selectedIndex].text;
-                
-                header.innerHTML = `
-                    <strong>${serviceName}</strong>
-                    <div class="header-buttons">
-                        <button class="btn-toggle-service" data-action="toggle-service">Fechar Serviço</button>
-                        <button class="btn-remove" data-action="remove-element" data-target-id="${servicoId}">${REMOVE_ICON_SVG}</button>
-                    </div>
-                `;
+                const serviceName = (target.value === 'sem_intervencao') ? 'Sem intervenção' : target.options[target.selectedIndex].text;
+                header.innerHTML = `<div class="service-header"><strong>${serviceName}</strong><div class="header-buttons"><button class="btn-toggle-service" data-action="toggle-service" aria-label="Alternar visibilidade do serviço">Fechar Serviço</button><button class="btn-remove" data-action="remove-element" data-target-id="${servicoId}" aria-label="Remover serviço">${REMOVE_ICON_SVG}</button></div></div>`;
             } else {
-                header.innerHTML = `
-                    <strong></strong>
-                    <div class="header-buttons">
-                        <button class="btn-remove" data-action="remove-element" data-target-id="${servicoId}">${REMOVE_ICON_SVG}</button>
-                    </div>
-                `;
+                header.innerHTML = `<div class="service-header"><strong></strong><div class="header-buttons"><button class="btn-remove" data-action="remove-element" data-target-id="${servicoId}" aria-label="Remover serviço">${REMOVE_ICON_SVG}</button></div></div>`;
             }
         }
     }
