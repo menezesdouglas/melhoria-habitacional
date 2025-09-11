@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Levantamento Habitacional v20.4</title>
+    <title>Levantamento Habitacional v20.5</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -24,6 +24,10 @@
         .btn-add:hover { background-color: #218838; }
         .btn-pdf { background-color: #c82333; }
         .btn-pdf:hover { background-color: #a21b29; }
+        .btn-save { background-color: #17a2b8; }
+        .btn-save:hover { background-color: #138496; }
+        .btn-load { background-color: #6c757d; }
+        .btn-load:hover { background-color: #5a6268; }
         .btn-toggle, .btn-toggle-service, .btn-finalizar { background-color: #ffc107; color: black; font-size: 14px; padding: 8px 12px; }
         .btn-toggle:hover, .btn-toggle-service:hover, .btn-finalizar:hover { background-color: #e0a800; }
         .btn-add-small { font-size: 14px; padding: 8px 12px; margin-top: 5px; }
@@ -63,11 +67,19 @@
         footer { text-align: center; padding: 20px; margin-top: 40px; border-top: 1px solid #dee2e6; font-size: 14px; color: #6c757d; }
         footer a { color: #0056b3; text-decoration: none; font-weight: 600; }
         footer a:hover { text-decoration: underline; }
+        .save-status {
+            font-size: 12px;
+            color: #28a745;
+            margin-left: 15px;
+            display: inline-block;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>Ferramenta de Levantamento v20.4</h1>
+    <h1>Ferramenta de Levantamento v20.5</h1>
     <div class="bloco">
         <h2>Dados do Beneficiário</h2>
         <div class="collapsible-content">
@@ -112,8 +124,15 @@
     <div id="listaComodos"></div>
     <button id="addComodo" class="btn-add" data-action="add-comodo" aria-label="Adicionar novo cômodo">Adicionar Cômodo</button>
     <hr style="margin: 30px 0;">
-    <button id="gerarResumo" data-action="gerar-relatorio" aria-label="Gerar relatório de texto">Gerar Relatório de Texto</button>
-    <button id="gerarPDF" class="btn-pdf" style="display:none;" data-action="gerar-pdf" aria-label="Gerar PDF do relatório">Gerar PDF</button>
+    
+    <div class="botoes-acoes">
+        <button id="gerarResumo" data-action="gerar-relatorio" aria-label="Gerar relatório de texto">Gerar Relatório</button>
+        <button id="salvarProgresso" data-action="salvar-progresso" class="btn-save" aria-label="Salvar progresso">Salvar Progresso</button>
+        <button id="carregarProgresso" data-action="carregar-progresso" class="btn-load" aria-label="Carregar progresso">Carregar Progresso</button>
+        <button id="gerarPDF" class="btn-pdf" style="display:none;" data-action="gerar-pdf" aria-label="Gerar PDF do relatório">Gerar PDF</button>
+        <span id="saveStatus" class="save-status"></span>
+    </div>
+
     <div id="output" style="display:none; margin-top: 20px;">
         <h3>Relatório Final</h3>
         <div id="resumo-container">
@@ -132,6 +151,8 @@
 const REMOVE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>`;
 window.jsPDF = window.jspdf.jsPDF;
 let nextId = 0;
+const STORAGE_KEY = 'levantamentoHabitacionalProgresso';
+
 
 const SERVICOS_DB = {
     "estrutura_madeira_cobertura": { nome: "Estrutura em madeira para cobertura", unidade: "m²", tipo: "cobertura" },
@@ -203,9 +224,9 @@ const SERVICOS_DB = {
     "caixa_agua_1000l": { nome: "Caixa d'água de polietileno 1000L", unidade: "un", tipo: "equipamento_geral" },
 };
 
-function popularSelectServicos(selectElement, tiposFiltro) {
+function popularSelectServicos(selectElement, tiposFiro) {
     selectElement.innerHTML = `<option value="">-- Escolha um serviço --</option><option value="sem_intervencao">Sem intervenção</option>`;
-    tiposFiltro.forEach(tipo => {
+    tiposFiro.forEach(tipo => {
         const optgroup = document.createElement('optgroup');
         optgroup.label = tipo.replace(/_/g, ' ').toUpperCase();
         for (const key in SERVICOS_DB) {
@@ -393,8 +414,6 @@ function gerarRelatorio() {
         }
         if (textoEstrutural) texto += textoEstrutural;
 
-        // ----- INÍCIO DA CORREÇÃO E REATORAÇÃO -----
-
         // Função auxiliar para processar subseções como Piso, Teto e Equipamentos
         const processSubSection = (containerSelector, title, areaInfo) => {
             let subTexto = '';
@@ -414,8 +433,7 @@ function gerarRelatorio() {
                     subTexto += res.isIntervention ? `  ▪ ${res.nome} = ${res.quant.toFixed(casasDecimais)} ${res.unidade} ${res.detalhe}\n` : `  ▪ ${res.nome}\n`;
                 }
             });
-
-            // CORREÇÃO: Busca o container de comentários como o próximo "irmão" do container de serviços.
+            
             const commentsContainer = servicesContainer.nextElementSibling;
             const comentarios = (commentsContainer && commentsContainer.classList.contains('comentarios-container')) 
                 ? processarComentarios(commentsContainer) 
@@ -437,8 +455,6 @@ function gerarRelatorio() {
         texto += processSubSection('.piso-container', 'PISO', areaPiso);
         texto += processSubSection('.teto-container', 'TETO', areaTeto);
         texto += processSubSection('.equipamentos-container', 'EQUIPAMENTOS GERAIS', null);
-
-        // ----- FIM DA CORREÇÃO E REATORAÇÃO -----
     });
 
     texto += `\n\n========================================\nQUANTITATIVOS TOTAIS PARA ORÇAMENTO\n========================================\n`;
@@ -730,6 +746,15 @@ function handleAppActions(e) {
         case 'gerar-pdf':
             gerarPDF();
             return;
+        // ***** NOVAS AÇÕES *****
+        case 'salvar-progresso':
+            salvarProgresso();
+            return;
+        case 'carregar-progresso':
+            if (confirm('Isso irá substituir os dados atuais. Deseja carregar o último levantamento salvo?')) {
+                carregarProgresso();
+            }
+            return;
         default:
             return;
     }
@@ -806,6 +831,185 @@ document.addEventListener('change', (e) => {
 ['click', 'touchend'].forEach(evt => {
     document.addEventListener(evt, handleAppActions);
 });
+
+// ***** INÍCIO DAS NOVAS FUNÇÕES DE SALVAR/CARREGAR *****
+
+// Função para extrair dados de serviços e comentários de um container
+function extrairDados(container) {
+    const servicos = [];
+    container.querySelectorAll('.servico-item').forEach(servicoDiv => {
+        const select = servicoDiv.querySelector('select');
+        if (select && select.value) {
+            const servico = {
+                id: select.value,
+                campos: {}
+            };
+            servicoDiv.querySelectorAll('.campos-especificos input, .campos-especificos select').forEach(input => {
+                servico.campos[input.name] = input.value;
+            });
+            servicos.push(servico);
+        }
+    });
+
+    const comentarios = [];
+    container.querySelectorAll('.comentario-bloco textarea').forEach(textarea => {
+        comentarios.push(textarea.value);
+    });
+
+    return { servicos, comentarios };
+}
+
+// Salva o progresso no localStorage
+function salvarProgresso(silencioso = false) {
+    const dados = {
+        beneficiario: {
+            nome: document.getElementById('nomeBeneficiario').value,
+            endereco: document.getElementById('enderecoBeneficiario').value
+        },
+        responsavel: {
+            nome: document.getElementById('nomeResponsavel').value
+        },
+        cobertura: {
+            area: document.getElementById('areaTelhado').value,
+            pdMax: document.getElementById('pdMaximo').value,
+            pdMin: document.getElementById('pdMinimo').value,
+            ...extrairDados(document.getElementById('bloco-cobertura'))
+        },
+        comodos: []
+    };
+
+    document.querySelectorAll('#listaComodos .bloco').forEach(comodoDiv => {
+        const comodo = {
+            nome: comodoDiv.querySelector('.comodo-nome').value,
+            pdMax: comodoDiv.querySelector('.comodo-pd-max').value,
+            pdMin: comodoDiv.querySelector('.comodo-pd-min').value,
+            areaPiso: comodoDiv.querySelector('.comodo-area-piso').value,
+            areaTeto: comodoDiv.querySelector('.comodo-area-teto').value,
+            paredes: [],
+            estrutural: extrairDados(comodoDiv.querySelector('.estrutural-container').parentElement),
+            piso: extrairDados(comodoDiv.querySelector('.piso-container').parentElement),
+            teto: extrairDados(comodoDiv.querySelector('.teto-container').parentElement),
+            equipamentos: extrairDados(comodoDiv.querySelector('.equipamentos-container').parentElement)
+        };
+        comodoDiv.querySelectorAll('.parede-bloco').forEach(paredeDiv => {
+            comodo.paredes.push({
+                comprimento: paredeDiv.querySelector('.parede-comprimento').value,
+                ...extrairDados(paredeDiv)
+            });
+        });
+        dados.comodos.push(comodo);
+    });
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dados));
+    
+    if (!silencioso) {
+        const status = document.getElementById('saveStatus');
+        const hora = new Date().toLocaleTimeString();
+        status.textContent = `Salvo às ${hora}`;
+        status.style.opacity = '1';
+        setTimeout(() => { status.style.opacity = '0'; }, 2000);
+    }
+}
+
+// Carrega o progresso a partir do localStorage
+function carregarProgresso() {
+    const dadosSalvos = localStorage.getItem(STORAGE_KEY);
+    if (!dadosSalvos) {
+        alert('Nenhum progresso salvo encontrado.');
+        return;
+    }
+
+    const dados = JSON.parse(dadosSalvos);
+
+    // Limpa o formulário atual
+    document.getElementById('listaComodos').innerHTML = '';
+    document.getElementById('bloco-cobertura').querySelector('.servicos-container').innerHTML = '';
+    document.getElementById('bloco-cobertura').querySelector('.comentarios-container').innerHTML = '';
+
+
+    // Preenche dados gerais
+    document.getElementById('nomeBeneficiario').value = dados.beneficiario.nome;
+    document.getElementById('enderecoBeneficiario').value = dados.beneficiario.endereco;
+    document.getElementById('nomeResponsavel').value = dados.responsavel.nome;
+    
+    // Preenche Cobertura
+    const cobertura = dados.cobertura;
+    document.getElementById('areaTelhado').value = cobertura.area;
+    document.getElementById('pdMaximo').value = cobertura.pdMax;
+    document.getElementById('pdMinimo').value = cobertura.pdMin;
+    recriarItens(document.querySelector('#bloco-cobertura [data-action="add-servico-cobertura"]'), cobertura.servicos);
+    recriarItens(document.querySelector('#bloco-cobertura [data-action="add-comentario"]'), cobertura.comentarios);
+
+    // Preenche Cômodos
+    dados.comodos.forEach(comodoData => {
+        document.getElementById('addComodo').click();
+        const novoComodo = document.querySelector('#listaComodos .bloco:last-child');
+        
+        novoComodo.querySelector('.comodo-nome').value = comodoData.nome;
+        novoComodo.querySelector('.comodo-pd-max').value = comodoData.pdMax;
+        novoComodo.querySelector('.comodo-pd-min').value = comodoData.pdMin;
+        novoComodo.querySelector('.comodo-area-piso').value = comodoData.areaPiso;
+        novoComodo.querySelector('.comodo-area-teto').value = comodoData.areaTeto;
+
+        comodoData.paredes.forEach(paredeData => {
+            novoComodo.querySelector('[data-action="add-parede"]').click();
+            const novaParede = novoComodo.querySelector('.parede-bloco:last-child');
+            novaParede.querySelector('.parede-comprimento').value = paredeData.comprimento;
+            recriarItens(novaParede.querySelector('[data-action="add-servico-parede"]'), paredeData.servicos);
+            recriarItens(novaParede.querySelector('[data-action="add-comentario"]'), paredeData.comentarios);
+        });
+
+        recriarItens(novoComodo.querySelector('[data-action="add-servico-estrutural"]'), comodoData.estrutural.servicos);
+        recriarItens(novoComodo.querySelector('[data-action="add-comentario"]', novoComodo.querySelector('.estrutural-container').parentElement), comodoData.estrutural.comentarios);
+        recriarItens(novoComodo.querySelector('[data-action="add-servico-piso"]'), comodoData.piso.servicos);
+        recriarItens(novoComodo.querySelector('[data-action="add-comentario"]', novoComodo.querySelector('.piso-container').parentElement), comodoData.piso.comentarios);
+        recriarItens(novoComodo.querySelector('[data-action="add-servico-teto"]'), comodoData.teto.servicos);
+        recriarItens(novoComodo.querySelector('[data-action="add-comentario"]', novoComodo.querySelector('.teto-container').parentElement), comodoData.teto.comentarios);
+        recriarItens(novoComodo.querySelector('[data-action="add-equipamento-geral"]'), comodoData.equipamentos.servicos);
+        recriarItens(novoComodo.querySelector('[data-action="add-comentario"]', novoComodo.querySelector('.equipamentos-container').parentElement), comodoData.equipamentos.comentarios);
+    });
+
+    alert('Progresso carregado com sucesso!');
+}
+
+function recriarItens(botaoAdd, itens) {
+    if (!itens || itens.length === 0) return;
+
+    const isServico = botaoAdd.dataset.action.includes('servico') || botaoAdd.dataset.action.includes('equipamento');
+
+    itens.forEach(itemData => {
+        botaoAdd.click();
+        const container = botaoAdd.closest('.botoes-acoes').previousElementSibling;
+        const novoItem = container.lastElementChild;
+
+        if (isServico) {
+            const select = novoItem.querySelector('select');
+            select.value = itemData.id;
+            select.dispatchEvent(new Event('change')); // Dispara o evento para criar os campos
+            for (const [key, value] of Object.entries(itemData.campos)) {
+                const campo = novoItem.querySelector(`[name="${key}"]`);
+                if (campo) campo.value = value;
+            }
+        } else { // É comentário
+            novoItem.querySelector('textarea').value = itemData;
+        }
+    });
+}
+
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', () => {
+    // Verifica se há dados salvos e pergunta ao usuário se deseja carregar
+    if (localStorage.getItem(STORAGE_KEY)) {
+        if (confirm('Foi encontrado um levantamento salvo. Deseja restaurar o progresso?')) {
+            carregarProgresso();
+        }
+    }
+
+    // Configura o salvamento automático a cada 30 segundos
+    setInterval(() => salvarProgresso(true), 30000); 
+});
+
 </script>
 </body>
 </html>
